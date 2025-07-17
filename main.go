@@ -8,6 +8,7 @@ import (
 
 	ui "github.com/ttrnecka/agent_poc/agent_poc"
 	"github.com/ttrnecka/agent_poc/api"
+	"github.com/ttrnecka/agent_poc/ws"
 )
 
 func main() {
@@ -25,6 +26,8 @@ func main() {
 func commonApiMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "*")
 		next.ServeHTTP(w, r)
 	})
 }
@@ -46,7 +49,15 @@ func router() http.Handler {
 	})
 
 	mux.HandleFunc("/api/v1/policy", commonApiMiddleware(api.PolicyApiHandler))
+	mux.HandleFunc("/api/v1/policy/", commonApiMiddleware(api.PolicyItemApiHandler))
 	mux.HandleFunc("/api/v1/probe", commonApiMiddleware(api.ProbeApiHandler))
+	mux.HandleFunc("/api/v1/collector", commonApiMiddleware(api.CollectorApiHandler))
+
+	hub := ws.NewHub()
+	go hub.Run()
+	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		ws.ServeWs(hub, w, r)
+	})
 
 	return mux
 }

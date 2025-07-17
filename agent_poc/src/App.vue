@@ -1,18 +1,28 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { onMounted } from 'vue'
+import Header from './components/Header.vue'
+import { dataStore } from '@/stores/store'
+const dStore = dataStore()
+
+onMounted(() => {
+  dStore.loadCollectors()
+  dStore.loadPolicies()
+  dStore.loadProbes()
+})
+
 </script>
 
 <template>
   <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
+    <img alt="Vue logo" class="logo" src="@/assets/xa.png" width="200" height="125" />
 
     <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+      <Header msg="Welcome to xAnalytics" />
 
       <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+        <RouterLink to="/">Configuration</RouterLink>
+        <RouterLink to="/collectors">Collector</RouterLink>
       </nav>
     </div>
   </header>
@@ -59,7 +69,7 @@ nav a:first-of-type {
 @media (min-width: 1024px) {
   header {
     display: flex;
-    place-items: center;
+    place-items: stretch;
     padding-right: calc(var(--section-gap) / 2);
   }
 
