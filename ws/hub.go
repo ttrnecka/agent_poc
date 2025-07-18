@@ -1,6 +1,9 @@
 package ws
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Hub struct {
 	// Registered clients.
@@ -36,7 +39,13 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
-			fmt.Printf("recv: %v", message)
+			var msg Message
+			if err := json.Unmarshal(message, &msg); err != nil {
+				fmt.Printf("unmarshal error: %v\n", err)
+			} else {
+				fmt.Printf("unmarshaled: %+v\n", msg)
+			}
+			// ...existing code...
 
 			for client := range h.clients {
 				select {

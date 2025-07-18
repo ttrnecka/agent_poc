@@ -6,7 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/gorilla/websocket v1.5.3
-	github.com/ttrnecka/agent_poc v0.0.0-20250718112353-b5856a960ea6
+	github.com/ttrnecka/agent_poc v0.0.0-20250718161151-219a85b9c629
 )
 
 // replace github.com/ttrnecka/agent_poc => D:\serious\workspace\XA\agent_poc

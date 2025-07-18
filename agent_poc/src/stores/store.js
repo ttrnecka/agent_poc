@@ -75,21 +75,32 @@ export const dataStore = defineStore('defStore', () => {
 
     conn.value.onmessage = function (evt) {
       console.log(evt.data)
+      const clientId = getClientId();
       const message = JSON.parse(evt.data)
-      if (message['Type'] == 1) {
+      if (message['Type'] == 1 && message['Source'] != clientId) {
         updateCollectorState(message['Source'],{status: message['Text']})
         probes.value[message['Source']] = message['Text']
       }
     };
 
     conn.value.onopen = function (evt) {
+      const clientId = getClientId();
       const msg = {
-        Type: 3,
-        Source: "web_client",
+        Type: 1,
+        Source: clientId,
         Text: "web_client connected"
       };
       conn.value.send(JSON.stringify(msg));
     };
+  }
+
+  function getClientId() {
+    let clientId = localStorage.getItem("client_id");
+    if (!clientId) {
+      clientId = "web_client_" + crypto.randomUUID(); // Secure, random
+      localStorage.setItem("client_id", clientId);
+    }
+    return clientId;
   }
   return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState, conn, connect }
 });

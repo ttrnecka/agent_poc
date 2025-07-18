@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/ttrnecka/agent_poc/api"
+	"github.com/ttrnecka/agent_poc/ws"
 )
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
@@ -103,7 +104,7 @@ func main() {
 	go func() {
 		defer close(done)
 		for {
-			mes := message{}
+			mes := ws.Message{}
 			err := c.ReadJSON(&mes)
 			if err != nil {
 				log.Println("read:", err)
