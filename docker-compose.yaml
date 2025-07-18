@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    ports:
+      - "8888:8888"
+    networks:
+      - agent_poc_network
+  collector1:
+    build:
+      context: ./collector
+    image: collector:test
+    networks:
+      - agent_poc_network
+    command: ["--addr", "web:8888", "--source", "collector1"]
+    depends_on:
+      - web
+  collector2:
+    build:
+      context: ./collector
+    image: collector:test
+    networks:
+      - agent_poc_network
+    command: ["--addr", "web:8888", "--source", "collector2"]
+    depends_on:
+      - web
+  collector3:
+    build:
+      context: ./collector
+    image: collector:test
+    networks:
+      - agent_poc_network
+    command: ["--addr", "web:8888", "--source", "collector3"]
+    depends_on:
+      - web
+networks:
+  agent_poc_network: {}
