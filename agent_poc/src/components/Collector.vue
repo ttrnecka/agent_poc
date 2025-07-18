@@ -17,17 +17,6 @@ const dStore = dataStore()
 //   return false;
 // }
 
-onMounted(() => {
-  conn.value = new WebSocket("ws://localhost:8888/ws");
-
-  conn.value.onmessage = function (evt) {
-    console.log(evt.data)
-    const message = JSON.parse(evt.data)
-    dStore.updateCollectorState(message['Source'],{status: message['Text']})
-      // collectorStatus.value=evt.data
-  };
-})
-
 const loadedMessage = computed(() => {
   return dStore.fetchError ? dStore.fetchError.message : loadingText
 })

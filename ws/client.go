@@ -33,6 +33,15 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
+// TYPE = 1 - client online/offline announcement
+// TYPE = 2 - policy refresh signal
+
+type Message struct {
+	Type   int
+	Source string
+	Text   string
+}
+
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub

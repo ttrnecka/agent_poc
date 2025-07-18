@@ -1,5 +1,7 @@
 package ws
 
+import "fmt"
+
 type Hub struct {
 	// Registered clients.
 	clients map[*Client]bool
@@ -34,6 +36,8 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
+			fmt.Printf("recv: %v", message)
+
 			for client := range h.clients {
 				select {
 				case client.send <- message:

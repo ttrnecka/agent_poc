@@ -9,6 +9,7 @@ onMounted(() => {
   dStore.loadCollectors()
   dStore.loadPolicies()
   dStore.loadProbes()
+  dStore.connect()
 })
 
 </script>

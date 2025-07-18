@@ -6,6 +6,7 @@ export const dataStore = defineStore('defStore', () => {
   const probes = ref(null)
   const collectors = ref(null)
   const fetchError = ref(null)
+  const conn = ref(null)
   
   async function load(url,ref) {
     try {  
@@ -69,5 +70,26 @@ export const dataStore = defineStore('defStore', () => {
     collectors.value[collector] = state
   }
 
-  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState }
-})
+  function connect() {
+    conn.value = new WebSocket("ws://localhost:8888/ws");
+
+    conn.value.onmessage = function (evt) {
+      console.log(evt.data)
+      const message = JSON.parse(evt.data)
+      if (message['Type'] == 1) {
+        updateCollectorState(message['Source'],{status: message['Text']})
+        probes.value[message['Source']] = message['Text']
+      }
+    };
+
+    conn.value.onopen = function (evt) {
+      const msg = {
+        Type: 3,
+        Source: "web_client",
+        Text: "web_client connected"
+      };
+      conn.value.send(JSON.stringify(msg));
+    };
+  }
+  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState, conn, connect }
+});
