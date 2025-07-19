@@ -25,7 +25,7 @@ RUN go mod download
 RUN go build -o /agent_poc
 
 # final stage
-FROM alpine 
+FROM alpine
 WORKDIR /
 COPY --from=build /agent_poc /agent_poc
 COPY --from=build /app/data /data
