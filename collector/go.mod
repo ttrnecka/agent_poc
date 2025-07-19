@@ -9,7 +9,4 @@ require (
 	github.com/ttrnecka/agent_poc v0.0.0-20250719142256-3331be8fe539
 )
 
-require (
-	github.com/google/uuid v1.6.0 // indirect
-	golang.org/x/net v0.42.0 // indirect
-)
+require github.com/google/uuid v1.6.0 // indirect
