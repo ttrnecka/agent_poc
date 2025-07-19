@@ -101,7 +101,7 @@ func main() {
 	go func() {
 		defer close(done)
 		for {
-			mes := ws.Message{}
+			mes := ws.NewMessage(nil, nil, nil)
 			err := c.ReadJSON(&mes)
 			// _, mes, err := c.ReadMessage()
 			if err != nil {

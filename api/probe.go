@@ -81,11 +81,7 @@ func save(r io.Reader) error {
 	}
 
 	for collector := range collectors {
-		bmessage, err := json.Marshal(ws.Message{
-			Type:   2,
-			Source: collector,
-			Text:   "Policy refresh signal",
-		})
+		bmessage, err := json.Marshal(ws.NewMessage(ws.MSG_REFRESH, collector, "Policy updated"))
 		if err != nil {
 			return fmt.Errorf("failed to marshal message: %v", err)
 		}

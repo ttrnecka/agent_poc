@@ -12,6 +12,8 @@ github.com/ttrnecka/agent_poc v0.0.0-20250718112353-b5856a960ea6 h1:/oIiX1lJrA4h
 github.com/ttrnecka/agent_poc v0.0.0-20250718112353-b5856a960ea6/go.mod h1:9ZxY1Q2tjU4O6DGVJ//BaFcT+PI9vu0mR6Ijcw9U8g8=
 github.com/ttrnecka/agent_poc v0.0.0-20250718161151-219a85b9c629 h1:hi5uMbsaWOVePDZdHnyfT62M+45QN7ofAIH2GpK2xhA=
 github.com/ttrnecka/agent_poc v0.0.0-20250718161151-219a85b9c629/go.mod h1:9ZxY1Q2tjU4O6DGVJ//BaFcT+PI9vu0mR6Ijcw9U8g8=
+github.com/ttrnecka/agent_poc v0.0.0-20250719142256-3331be8fe539 h1:zh8ybBJhPNGCvI6Bw9m1vl8n9GznoVQvFRATMeahdHs=
+github.com/ttrnecka/agent_poc v0.0.0-20250719142256-3331be8fe539/go.mod h1:9ZxY1Q2tjU4O6DGVJ//BaFcT+PI9vu0mR6Ijcw9U8g8=
 golang.org/x/net v0.17.0 h1:pVaXccu2ozPjCXewfr1S7xza/zcXTity9cCdXQYSjIM=
 golang.org/x/net v0.17.0/go.mod h1:NxSsAGuq816PNPmqtQdLE42eU2Fs7NoRIZrHJAlaCOE=
 golang.org/x/net v0.19.0 h1:zTwKpTd2XuCqf8huc7Fo2iSy+4RHPd10s4KzeTnVr1c=
