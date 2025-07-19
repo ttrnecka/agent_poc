@@ -43,7 +43,7 @@ func (h *Hub) Run() {
 			if err := json.Unmarshal(message, &msg); err != nil {
 				fmt.Printf("unmarshal error: %v\n", err)
 			} else {
-				fmt.Printf("unmarshaled: %+v\n", msg)
+				fmt.Printf("recv: %+v\n", msg)
 			}
 			// ...existing code...
 

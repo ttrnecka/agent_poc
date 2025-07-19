@@ -1,29 +1,18 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { dataStore } from '@/stores/store'
+import { useApiStore } from '@/stores/apiStore'
 const collectorStatus = ref("UNKNOWN")
-const conn = ref(null)
+
 const loadingText = "Loading..."
-const dStore = dataStore()
-// function send() {
-//   if (!conn.value) {
-//       return false;
-//   }
-//   if (!msg.value.value) {
-//       return false;
-//   }
-//   conn.value.send(msg.value.value)
-//   msg.value.value = "";
-//   return false;
-// }
+const apiStore = useApiStore()
 
 const loadedMessage = computed(() => {
-  return dStore.fetchError ? dStore.fetchError.message : loadingText
+  return apiStore.fetchError ? apiStore.fetchError.message : loadingText
 })
 </script>
 <template>
 <div>
-  <p v-if="!dStore.collectors">{{ loadedMessage }}</p>
+  <p v-if="!apiStore.collectors">{{ loadedMessage }}</p>
   <div v-else>
     <table class="table">
       <thead class="thead-dark">
@@ -33,7 +22,7 @@ const loadedMessage = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(coll, index) in dStore.collectors">
+        <tr v-for="(coll, index) in apiStore.collectors" :key="index">
           <td>{{index}}</td>
           <td>{{coll.status || collectorStatus}}</td>
         </tr>

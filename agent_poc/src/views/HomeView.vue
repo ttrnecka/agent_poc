@@ -1,10 +1,10 @@
 <script setup>
-import MainView from '../components/MainView.vue'
+import ProbeList from '../components/ProbeList.vue'
 </script>
 
 <template>
   <main>
-    <MainView />
+    <ProbeList />
   </main>
 </template>
 

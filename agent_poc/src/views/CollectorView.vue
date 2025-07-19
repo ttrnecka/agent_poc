@@ -1,10 +1,10 @@
 <script setup>
-import Chat from '../components/Collector.vue'
+import CollectorList from '../components/CollectorList.vue'
 </script>
 
 <template>
   <main>
-    <Chat />
+    <CollectorList />
   </main>
 </template>
 

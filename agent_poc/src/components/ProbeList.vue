@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { dataStore } from '@/stores/store'
+import { useApiStore } from '@/stores/apiStore'
 import { Modal } from "bootstrap";
 
 const newProbe = {
@@ -13,7 +13,7 @@ const newProbe = {
     user: null,
     password: null
 }
-const dStore = dataStore()
+const apiStore = useApiStore()
 const state = ref({
   probeModal: null,
   newProbe: newProbe
@@ -35,22 +35,22 @@ function editProbe(probe) {
 }
 
 async function saveProbe() {
-  if (await dStore.saveProbes(state.value.newProbe)) {
+  if (await apiStore.saveProbes(state.value.newProbe)) {
     state.value.newProbe = newProbe
     state.value.probeModal.hide();
   }
-  dStore.loadProbes()
+  apiStore.loadProbes()
 }
 
 // a computed ref
 const loadedMessage = computed(() => {
-  return dStore.fetchError ? dStore.fetchError.message : loadingText
+  return apiStore.fetchError ? apiStore.fetchError.message : loadingText
 })
 
 </script>
 <template>
 <div>
-  <p v-if="!dStore.policies">{{ loadedMessage }}</p>
+  <p v-if="!apiStore.policies">{{ loadedMessage }}</p>
   <div v-else>
     <button @click="showProbeModal()" class="btn btn-primary">Add Probe</button>
     <table class="table">
@@ -66,10 +66,10 @@ const loadedMessage = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(probe, index) in dStore.probes" @click="editProbe(probe)">
+        <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index">
           <th scope="row">{{index+1}}</th>
           <td>{{probe.collector}}</td>
-          <td>{{dStore.policies[probe.policy].name}}</td>
+          <td>{{apiStore.policies[probe.policy].name}}</td>
           <td>{{probe.version}}</td>
           <td>{{probe.address}}</td>
           <td>{{probe.port}}</td>
@@ -90,21 +90,33 @@ const loadedMessage = computed(() => {
               <div class="mb-3">
                 <label for="collectorInput" class="form-label">Collector</label>
                 <select id="collectorInput" class="form-select" aria-label="Select collector" v-model="state.newProbe.collector">
-                  <option v-for="coll,index in dStore.collectors" :value="index">{{index}}</option>
+                  <option v-for="coll,index in apiStore.collectors" :value="index" :key="index">{{index}}</option>
                 </select>
               </div>
               <div class="mb-3">
                 <label for="policyInput" class="form-label">Policy Type</label>
                 <select id="policyInput" class="form-select" aria-label="Select policy type" v-model="state.newProbe.policy">
-                  <option v-for="(pol,key) in dStore.policies" :value="key">{{pol.name}}</option>
+                  <option v-for="(pol,key) in apiStore.policies" :value="key" :key="key">{{pol.name}}</option>
                 </select>
               </div>
-              <div class="mb-3">
+                <div class="mb-3">
                 <label for="versionInput" class="form-label">Version</label>
-                <select id="versionInput" class="form-select" aria-label="Select policy version" v-model="state.newProbe.version">
-                  <option v-if="state.newProbe.policy" v-for="version in dStore.policies[state.newProbe.policy].versions" :value="version">{{version}}</option>
+                <select
+                  id="versionInput"
+                  class="form-select"
+                  aria-label="Select policy version"
+                  v-model="state.newProbe.version"
+                >
+                  <option v-if="!state.newProbe.policy" disabled value="">-- Select policy first --</option>
+                  <option
+                  v-for="version in (state.newProbe.policy ? apiStore.policies[state.newProbe.policy].versions : [])"
+                  :value="version"
+                  :key="version"
+                  >
+                  {{ version }}
+                  </option>
                 </select>
-              </div>
+                </div>
               <div class="mb-3">
                 <label for="ipInput" class="form-label">Address</label>
                 <input type="text" class="form-control" id="ipInput" aria-describedby="ipHelp" v-model="state.newProbe.address">

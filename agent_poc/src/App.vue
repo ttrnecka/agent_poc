@@ -2,33 +2,37 @@
 import { RouterLink, RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import Header from './components/Header.vue'
-import { dataStore } from '@/stores/store'
-const dStore = dataStore()
+import { useApiStore } from '@/stores/apiStore'
+import { useWsConnectionStore } from '@/stores/wsStore'
+
+const apiStore = useApiStore()
+const ws = useWsConnectionStore()
 
 onMounted(() => {
-  dStore.loadCollectors()
-  dStore.loadPolicies()
-  dStore.loadProbes()
-  dStore.connect()
+  apiStore.loadCollectors()
+  apiStore.loadPolicies()
+  apiStore.loadProbes()
+  ws.connect()
 })
-
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/xa.png" width="200" height="125" />
+  <div>
+    <header>
+      <img alt="Vue logo" class="logo" src="@/assets/xa.png" width="200" height="125" />
 
-    <div class="wrapper">
-      <Header msg="Welcome to xAnalytics" />
+      <div class="wrapper">
+        <Header msg="Welcome to xAnalytics" />
 
-      <nav>
-        <RouterLink to="/">Configuration</RouterLink>
-        <RouterLink to="/collectors">Collector</RouterLink>
-      </nav>
-    </div>
-  </header>
+        <nav>
+          <RouterLink to="/">Configuration</RouterLink>
+          <RouterLink to="/collectors">Collector</RouterLink>
+        </nav>
+      </div>
+    </header>
 
-  <RouterView />
+    <RouterView />
+  </div>
 </template>
 
 <style scoped>
