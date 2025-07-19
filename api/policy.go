@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +18,7 @@ type Policy struct {
 func PolicyApiHandler(w http.ResponseWriter, r *http.Request) {
 	p := r.URL.Path
 	fmt.Println(p)
-	fmt.Fprintf(w, output("policies.json"))
+	fmt.Fprint(w, output("policies.json"))
 }
 
 func PolicyItemApiHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,11 @@ func handleLargeFile(w http.ResponseWriter, r *http.Request, LargeFileName strin
 	//Open file
 	f, err := os.Open(LargeFileName)
 	if err != nil {
-		http.Error(w, err.Error(), 400)
+		if errors.Is(err, os.ErrNotExist) {
+			http.Error(w, err.Error(), 404)
+			return
+		}
+		http.Error(w, err.Error(), 404)
 		return
 	}
 	defer f.Close()

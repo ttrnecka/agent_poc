@@ -6,5 +6,5 @@ import (
 )
 
 func CollectorApiHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, output("collectors.json"))
+	fmt.Fprint(w, output("collectors.json"))
 }

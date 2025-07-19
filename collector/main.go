@@ -21,14 +21,6 @@ import (
 var addr = flag.String("addr", "localhost:8888", "http service address")
 var source = flag.String("source", "collector1", "name of collector")
 
-// TYPE = 1 - online/offline announcement
-// TYPE = 2 - policy refresh signal
-type message struct {
-	Type   int
-	Source string
-	Text   string
-}
-
 // reads the collector config and pulls required policies and their versions
 func refresh() error {
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
@@ -76,7 +68,12 @@ func refresh() error {
 		for _, version := range versions {
 			file_name := fmt.Sprintf("bin/%s_%s.exe", name, version)
 			if _, err := os.Stat(file_name); err != nil {
-				DownloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version))
+				err = DownloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version))
+				if err != nil {
+					log.Printf("Error downloading %s: %v", file_name, err)
+				}
+			} else {
+				log.Printf("File %s already exists, skipping download", file_name)
 			}
 		}
 	}
@@ -106,6 +103,7 @@ func main() {
 		for {
 			mes := ws.Message{}
 			err := c.ReadJSON(&mes)
+			// _, mes, err := c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
 				return
@@ -129,7 +127,7 @@ func main() {
 			return
 		case <-ticker.C:
 			// err := c.WriteMessage(websocket.TextMessage, []byte("ONLINE"))
-			err := c.WriteJSON(message{Type: 1, Source: *source, Text: "ONLINE"})
+			err := c.WriteJSON(ws.Message{Type: 1, Source: *source, Text: "ONLINE"})
 			if err != nil {
 				log.Println("write:", err)
 				return
@@ -140,7 +138,7 @@ func main() {
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			// err := c.WriteMessage(websocket.TextMessage, []byte("OFFLINE"))
-			err := c.WriteJSON(message{Type: 1, Source: *source, Text: "OFFLINE"})
+			err := c.WriteJSON(ws.Message{Type: 1, Source: *source, Text: "OFFLINE"})
 			if err != nil {
 				log.Println("write:", err)
 				return
@@ -168,6 +166,10 @@ func DownloadFile(filepath string, url string) error {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected HTTP status: %s", resp.Status)
+	}
 
 	// Create the file
 	out, err := os.Create(filepath)

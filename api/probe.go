@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"github.com/ttrnecka/agent_poc/ws"
 )
 
 type Probe struct {
@@ -25,7 +26,7 @@ type Probe struct {
 func ProbeApiHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		fmt.Fprintf(w, output("probes.json"))
+		fmt.Fprint(w, output("probes.json"))
 	case "POST":
 
 		if err := save(r.Body); err != nil {
@@ -67,10 +68,28 @@ func save(r io.Reader) error {
 	if err != nil {
 		return err
 	}
+
+	// we broadcast the new probes to all connected clients
+	hub := ws.GetHub()
+	collectors := make(map[string]bool)
+
 	for i, p := range unm {
+		collectors[p.Collector] = true
 		if p.Id == "" {
 			unm[i].Id = uuid.New().String()
 		}
+	}
+
+	for collector := range collectors {
+		bmessage, err := json.Marshal(ws.Message{
+			Type:   2,
+			Source: collector,
+			Text:   "Policy refresh signal",
+		})
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %v", err)
+		}
+		hub.BroadcastMessage(bmessage)
 	}
 	var buf bytes.Buffer
 	err = json.NewEncoder(&buf).Encode(unm)

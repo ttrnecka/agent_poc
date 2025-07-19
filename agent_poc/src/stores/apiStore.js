@@ -60,7 +60,7 @@ export const useApiStore = defineStore('api', () => {
           }
         }
       }
-      const response = await fetch(probesUrl(), {
+      const response = await fetch(probesUrl.value, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

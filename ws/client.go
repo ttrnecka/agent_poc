@@ -106,12 +106,15 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
+			// If you uncomment this all the json messages will be sent in one go and the client will have to handle it
+			// in the future you may consider sending array of messages instead of one by one
+			// frontend has already been updated to handle this by newline delimited messages
 			// Add queued chat messages to the current websocket message.
-			n := len(c.send)
-			for i := 0; i < n; i++ {
-				w.Write(newline)
-				w.Write(<-c.send)
-			}
+			// n := len(c.send)
+			// for i := 0; i < n; i++ {
+			// 	w.Write(newline)
+			// 	w.Write(<-c.send)
+			// }
 
 			if err := w.Close(); err != nil {
 				return

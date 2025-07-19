@@ -66,7 +66,7 @@ const loadedMessage = computed(() => {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index">
+        <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index" class="probe-row">
           <th scope="row">{{index+1}}</th>
           <td>{{probe.collector}}</td>
           <td>{{apiStore.policies[probe.policy].name}}</td>
@@ -144,3 +144,13 @@ const loadedMessage = computed(() => {
     </div>
 </div>
 </template>
+
+<style type="text/css">
+.probe-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.probe-row:hover td {
+  background: #cecece;
+}
+</style>

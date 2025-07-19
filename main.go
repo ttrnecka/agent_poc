@@ -53,7 +53,7 @@ func router() http.Handler {
 	mux.HandleFunc("/api/v1/probe", commonApiMiddleware(api.ProbeApiHandler))
 	mux.HandleFunc("/api/v1/collector", commonApiMiddleware(api.CollectorApiHandler))
 
-	hub := ws.NewHub()
+	hub := ws.GetHub()
 	go hub.Run()
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		ws.ServeWs(hub, w, r)
