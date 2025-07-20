@@ -110,8 +110,13 @@ func main() {
 				return
 			}
 			log.Printf("recv: %v", mes)
-			if mes.Type == ws.MSG_REFRESH && mes.Source == *source {
-				refresh()
+			if mes.Source == *source {
+				if mes.Type == ws.MSG_REFRESH {
+					refresh()
+				}
+				if mes.Type == ws.MSG_RUN {
+					run(mes)
+				}
 			}
 		}
 	}()

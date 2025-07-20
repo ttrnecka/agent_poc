@@ -15,6 +15,7 @@ const (
 // policy messages
 const (
 	MSG_REFRESH MessageType = iota + 10 // Policy refresh signal
+	MSG_RUN                             // Run policy signal
 )
 
 type Message struct {
