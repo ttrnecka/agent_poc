@@ -11,7 +11,7 @@ npm run build
 
 # To deploy gui + backend
 
-docker build -t agent_poc:test .
+docker build -t agent_poc:test . 
 
 docker image prune -f
 

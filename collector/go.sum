@@ -4,3 +4,5 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/ttrnecka/agent_poc v0.0.0-20250719165636-5bac0459bc35 h1:L+Uzf3zs2wK7mbA2YwCwVG+oFjqGkB1oP7H09ByI4r4=
 github.com/ttrnecka/agent_poc v0.0.0-20250719165636-5bac0459bc35/go.mod h1:9ZxY1Q2tjU4O6DGVJ//BaFcT+PI9vu0mR6Ijcw9U8g8=
+github.com/ttrnecka/agent_poc v0.0.0-20250720155434-410cd722e8e8 h1:Z3a5daA0fdFCkS6h0inwnKNq3/2jdgwKuRcsJDSWD7w=
+github.com/ttrnecka/agent_poc v0.0.0-20250720155434-410cd722e8e8/go.mod h1:FGdBDIexAXUgMhiJOCs6N7rnEmzm4ziVr+yoMSPWD8E=
