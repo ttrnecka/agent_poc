@@ -1,6 +1,6 @@
 package ws
 
-type MessageType int
+type MessageType = int
 
 // TYPE = 1 - client online announcement
 // TYPE = 2 - client offline announcement
@@ -25,7 +25,7 @@ type Message struct {
 
 func NewMessage(t MessageType, source, text string) Message {
 	return Message{
-		Type:   int(t),
+		Type:   t,
 		Source: source,
 		Text:   text,
 	}

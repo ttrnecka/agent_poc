@@ -110,7 +110,7 @@ func main() {
 				return
 			}
 			log.Printf("recv: %v", mes)
-			if mes.Type == 2 && mes.Source == *source {
+			if mes.Type == ws.MSG_REFRESH && mes.Source == *source {
 				refresh()
 			}
 		}
