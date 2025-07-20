@@ -32,5 +32,12 @@ services:
     command: ["--addr", "web:8888", "--source", "collector3"]
     depends_on:
       - web
+  switch:
+    image: trnecka/mock_server:latest
+    networks:
+      - agent_poc_network
+    command: ["run","-m", "brocade_switch","-p", "2222"]
+    ports:
+      - "2222:2222"
 networks:
   agent_poc_network: {}
