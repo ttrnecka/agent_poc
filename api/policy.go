@@ -42,7 +42,7 @@ func handleLargeFile(w http.ResponseWriter, r *http.Request, LargeFileName strin
 			http.Error(w, err.Error(), 404)
 			return
 		}
-		http.Error(w, err.Error(), 404)
+		http.Error(w, err.Error(), 400)
 		return
 	}
 	defer f.Close()
