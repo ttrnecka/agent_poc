@@ -3,11 +3,34 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/google/shlex"
 	"github.com/ttrnecka/agent_poc/ws"
 )
+
+func parseEnvAssignments(input string) ([]string, []string) {
+	tokens, err := shlex.Split(input)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var envVars []string
+	var rest []string
+
+	for i, token := range tokens {
+		if strings.Contains(token, "=") && !strings.HasPrefix(token, "=") {
+			envVars = append(envVars, token)
+		} else {
+			rest = tokens[i:]
+			break
+		}
+	}
+	return envVars, rest
+}
 
 func run(mes ws.Message) {
 	// This function should implement the logic to run the policy
@@ -15,8 +38,11 @@ func run(mes ws.Message) {
 	log.Printf("Running policy for collector %s with message: %s", mes.Source, mes.Text)
 	// Here you would typically call the function that executes the policy.
 
-	parts := strings.Fields(mes.Text)
+	envs, parts := parseEnvAssignments(mes.Text)
+	log.Printf("Parsed environment variables: %v", envs)
+	log.Printf("Parsed command parts: %v", parts)
 	cmd := exec.Command(fmt.Sprintf("./bin/%s", parts[0]), parts[1:]...)
+	cmd.Env = append(os.Environ(), envs...)
 	output, err := cmd.CombinedOutput()
 
 	log.Printf("Command output: %s", output)

@@ -45,7 +45,11 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  ws.sendMessage(11, probe.collector, `${probe.policy}_${probe.version} ${probe.user} ${probe.password} ${probe.address}:${probe.port}`);
+  ws.sendMessage(11, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+}
+
+function validateProbe(probe) {
+  ws.sendMessage(11, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
 }
 // a computed ref
 const loadedMessage = computed(() => {
@@ -86,6 +90,12 @@ const loadedMessage = computed(() => {
               class="btn btn-primary"
             >
               Run
+            </button>
+            <button
+              @click.stop="validateProbe(probe)"
+              class="btn btn-primary"
+            >
+              Validate
             </button>
           </td>
         </tr>
