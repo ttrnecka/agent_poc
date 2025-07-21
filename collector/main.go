@@ -66,7 +66,7 @@ func refresh() error {
 	// download
 	for name, versions := range policies {
 		for _, version := range versions {
-			file_name := fmt.Sprintf("bin/%s_%s.exe", name, version)
+			file_name := fmt.Sprintf("bin/%s_%s", name, version)
 			if _, err := os.Stat(file_name); err != nil {
 				err = DownloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version))
 				if err != nil {

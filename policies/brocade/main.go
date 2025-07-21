@@ -21,6 +21,7 @@ var commandsV101 []string = []string{
 	"switchshow",
 	"version",
 	"fabricshow",
+	"agshow",
 }
 
 func main() {
@@ -30,16 +31,17 @@ func main() {
 
 	client, err := connectToHost(os.Args[1], os.Args[2], os.Args[3])
 	if err != nil {
-		panic(err)
+		log.Fatal(fmt.Errorf("failed to connect to host: %v", err))
 	}
 
 	var commands []string
-	if Version == "1.0.0" {
+	switch Version {
+	case "1.0.0":
 		commands = commandsV100
-	} else if Version == "1.0.1" {
+	case "1.0.1":
 		commands = commandsV101
-	} else {
-		panic(fmt.Errorf("unknown build %s", Version))
+	default:
+		log.Fatal(fmt.Errorf("unknown build %s", Version))
 	}
 	for _, cmd := range commands {
 		out, err := runCommand(client, cmd)
