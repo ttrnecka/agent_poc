@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -101,7 +103,7 @@ func main() {
 	go func() {
 		defer close(done)
 		for {
-			mes := ws.NewMessage(0, "", "")
+			mes := ws.NewMessage(0, "", "", "")
 
 			err := c.ReadJSON(&mes)
 			// _, mes, err := c.ReadMessage()
@@ -186,5 +188,29 @@ func DownloadFile(filepath string, url string) error {
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+	err = makeExecutable(filepath)
 	return err
+}
+
+func makeExecutable(filePath string) error {
+	switch runtime.GOOS {
+	case "linux", "darwin":
+		// Use chmod to set executable bit (755)
+		return os.Chmod(filePath, 0755)
+	case "windows":
+		// Optionally, ensure .exe extension if it's a binary
+		if filepath.Ext(filePath) != ".exe" {
+			newPath := filePath + ".exe"
+			if err := os.Rename(filePath, newPath); err != nil {
+				return fmt.Errorf("rename to .exe failed: %w", err)
+			}
+		}
+		// Windows doesn't need chmod
+		return nil
+	default:
+		return fmt.Errorf("unsupported OS: %s", runtime.GOOS)
+	}
 }

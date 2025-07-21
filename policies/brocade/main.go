@@ -30,6 +30,8 @@ func main() {
 	}
 
 	client, err := connectToHost(os.Args[1], os.Args[2], os.Args[3])
+	defer client.Close()
+
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to connect to host: %v", err))
 	}
@@ -43,14 +45,20 @@ func main() {
 	default:
 		log.Fatal(fmt.Errorf("unknown build %s", Version))
 	}
+	code := 0
 	for _, cmd := range commands {
 		out, err := runCommand(client, cmd)
 		if err != nil {
-			panic(err)
+			log.Printf("Error running command %s: %v", cmd, err)
+			if exitErr, ok := err.(*ssh.ExitError); ok {
+				code = exitErr.ExitStatus()
+			} else {
+				code = 255
+			}
 		}
 		fmt.Println(string(out))
 	}
-	client.Close()
+	os.Exit(code)
 }
 
 func connectToHost(user, pass, host string) (*ssh.Client, error) {
@@ -75,7 +83,6 @@ func connectToHost(user, pass, host string) (*ssh.Client, error) {
 func runCommand(client *ssh.Client, command string) (string, error) {
 	session, err := client.NewSession()
 	if err != nil {
-		client.Close()
 		return "", err
 	}
 	defer session.Close()
