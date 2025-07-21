@@ -6,3 +6,5 @@ github.com/ttrnecka/agent_poc v0.0.0-20250720173521-642ea6b2bfaf h1:954UuPjcMQEY
 github.com/ttrnecka/agent_poc v0.0.0-20250720173521-642ea6b2bfaf/go.mod h1:FGdBDIexAXUgMhiJOCs6N7rnEmzm4ziVr+yoMSPWD8E=
 github.com/ttrnecka/agent_poc v0.0.0-20250720180052-f6bd3d59928a h1:69cyxhkQIpZm8ilz6MLecLUpmVE2q01IveX2TXiupvc=
 github.com/ttrnecka/agent_poc v0.0.0-20250720180052-f6bd3d59928a/go.mod h1:FGdBDIexAXUgMhiJOCs6N7rnEmzm4ziVr+yoMSPWD8E=
+github.com/ttrnecka/agent_poc v0.0.0-20250721065230-27b979453fcd h1:X4+6PMZR2hRw/nZR8cg7GQFkt5VLZAfvVmAlUsz320A=
+github.com/ttrnecka/agent_poc v0.0.0-20250721065230-27b979453fcd/go.mod h1:FGdBDIexAXUgMhiJOCs6N7rnEmzm4ziVr+yoMSPWD8E=

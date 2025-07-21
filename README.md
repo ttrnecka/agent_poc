@@ -4,7 +4,7 @@ npm run dev
 cd ..
 go run .
 
-# To build npm locally
+# To build npm locally 
 
 npm run build
 

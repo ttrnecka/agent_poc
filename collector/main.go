@@ -110,7 +110,7 @@ func main() {
 				return
 			}
 			log.Printf("recv: %v", mes)
-			if mes.Source == *source {
+			if mes.Destination == *source {
 				if mes.Type == ws.MSG_REFRESH {
 					refresh()
 				}
@@ -133,7 +133,7 @@ func main() {
 			return
 		case <-ticker.C:
 			// err := c.WriteMessage(websocket.TextMessage, []byte("ONLINE"))
-			err := c.WriteJSON(ws.NewMessage(ws.MSG_ONLINE, *source, "Collector is online"))
+			err := c.WriteJSON(ws.NewMessage(ws.MSG_ONLINE, *source, "hub", "Collector is online"))
 			if err != nil {
 				log.Println("write:", err)
 				return
@@ -144,7 +144,7 @@ func main() {
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			// err := c.WriteMessage(websocket.TextMessage, []byte("OFFLINE"))
-			err := c.WriteJSON(ws.NewMessage(ws.MSG_OFFLINE, *source, "Collector is going offline"))
+			err := c.WriteJSON(ws.NewMessage(ws.MSG_OFFLINE, *source, "hub", "Collector is going offline"))
 			if err != nil {
 				log.Println("write:", err)
 				return

@@ -45,7 +45,7 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  ws.sendMessage(11, `${probe.policy}_${probe.version} ${probe.user} ${probe.password} ${probe.address}:${probe.port}`);
+  ws.sendMessage(11, probe.collector, `${probe.policy}_${probe.version} ${probe.user} ${probe.password} ${probe.address}:${probe.port}`);
 }
 // a computed ref
 const loadedMessage = computed(() => {
