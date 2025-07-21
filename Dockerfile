@@ -12,9 +12,11 @@ RUN npm run build
 
 FROM golang:1.23-alpine AS build
 
-
 COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
-RUN update-ca-certificates
+
+ENV CGO_ENABLED=0
+
+RUN apk update && apk add bash ca-certificates dos2unix git && update-ca-certificates 2>/dev/null
 
 WORKDIR /app
 
@@ -24,10 +26,15 @@ COPY --from=npm /app/dist /app/agent_poc/dist
 RUN go mod download
 RUN go build -o /agent_poc
 
+WORKDIR /app/policies/brocade
+RUN ./build.sh 1.0.0
+RUN ./build.sh 1.0.1
+
 # final stage
 FROM alpine 
 WORKDIR /
 COPY --from=build /agent_poc /agent_poc
 COPY --from=build /app/data /data
+COPY --from=build /app/policies/brocade/ /data/policies
 EXPOSE 8888
 ENTRYPOINT ["/agent_poc"]

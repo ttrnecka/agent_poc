@@ -26,7 +26,7 @@ func PolicyItemApiHandler(w http.ResponseWriter, r *http.Request) {
 	var policy_name, policy_version string
 	switch {
 	case match(p, "/api/v1/policy/+/+", &policy_name, &policy_version):
-		file := fmt.Sprintf("data/policies/%s_%s.exe", policy_name, policy_version)
+		file := fmt.Sprintf("data/policies/%s_%s", policy_name, policy_version)
 		handleLargeFile(w, r, file)
 	default:
 		http.NotFound(w, r)

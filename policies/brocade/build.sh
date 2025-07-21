@@ -13,4 +13,5 @@ LDFLAGS=(
 
 # STEP 3: Actual Go build process
 
-go build -ldflags="${LDFLAGS[*]}" -o "brocade_cli_${VERSION}.exe"
+CGO_ENABLED=0 GOOS=windows go build -ldflags="${LDFLAGS[*]}" -o "brocade_cli_${VERSION}.exe"
+CGO_ENABLED=0 GOOS=linux go build -ldflags="${LDFLAGS[*]}" -o "brocade_cli_${VERSION}"
