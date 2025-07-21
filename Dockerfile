@@ -1,9 +1,9 @@
 # build stage
 FROM node:20-alpine AS npm
 
-# COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
 
-# RUN npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt
+RUN npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt
 WORKDIR /app
 COPY agent_poc/package*.json ./
 RUN npm ci  --force --loglevel verbose
@@ -16,7 +16,8 @@ COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
 
 ENV CGO_ENABLED=0
 
-RUN apk update && apk add bash ca-certificates dos2unix git && update-ca-certificates 2>/dev/null
+RUN update-ca-certificates
+RUN apk update && apk add bash ca-certificates dos2unix && update-ca-certificates 2>/dev/null
 
 WORKDIR /app
 
@@ -27,8 +28,11 @@ RUN go mod download
 RUN go build -o /agent_poc
 
 WORKDIR /app/policies/brocade
-RUN ./build.sh 1.0.0
-RUN ./build.sh 1.0.1
+
+RUN chmod +x build.sh
+RUN dos2unix ./build.sh
+RUN bash ./build.sh 1.0.0
+RUN bash ./build.sh 1.0.1
 
 # final stage
 FROM alpine 

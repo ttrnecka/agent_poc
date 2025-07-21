@@ -19,15 +19,17 @@ const (
 )
 
 type Message struct {
-	Type   int
-	Source string
-	Text   string
+	Type        int
+	Source      string
+	Destination string
+	Text        string
 }
 
-func NewMessage(t MessageType, source, text string) Message {
+func NewMessage(t MessageType, source, destination, text string) Message {
 	return Message{
-		Type:   t,
-		Source: source,
-		Text:   text,
+		Type:        t,
+		Source:      source,
+		Destination: destination,
+		Text:        text,
 	}
 }

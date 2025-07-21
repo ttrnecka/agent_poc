@@ -55,6 +55,16 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
     return clientId;
   }
 
+  function sendMessage(type, text) {
+    const clientId = getClientId(); 
+    const msg = {
+        Type: type,
+        Source: clientId,
+        Text: text
+    };
+    conn.value.send(JSON.stringify(msg));
+  }
+
   function handleMessage(msg) {
     console.log('📥 Message:', msg.Text);
     if (msg.Source != getClientId()) {
@@ -67,5 +77,5 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
     }
   }
   
-  return { conn, wsUrl, connect }
+  return { conn, wsUrl, connect, sendMessage }
 });

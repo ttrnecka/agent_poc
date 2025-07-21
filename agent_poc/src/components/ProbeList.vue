@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
+import { useWsConnectionStore } from '@/stores/wsStore'
 import { Modal } from "bootstrap";
 
 const newProbe = {
@@ -14,6 +15,7 @@ const newProbe = {
     password: null
 }
 const apiStore = useApiStore()
+const ws = useWsConnectionStore()
 const state = ref({
   probeModal: null,
   newProbe: newProbe
@@ -42,6 +44,9 @@ async function saveProbe() {
   apiStore.loadProbes()
 }
 
+function runProbe(probe) {
+  ws.sendMessage(11, `${probe.policy}_${probe.version} ${probe.user} ${probe.password} ${probe.address}:${probe.port}`);
+}
 // a computed ref
 const loadedMessage = computed(() => {
   return apiStore.fetchError ? apiStore.fetchError.message : loadingText
@@ -63,6 +68,7 @@ const loadedMessage = computed(() => {
           <th scope="col">Address</th>
           <th scope="col">Port</th>
           <th scope="col">User</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -74,6 +80,14 @@ const loadedMessage = computed(() => {
           <td>{{probe.address}}</td>
           <td>{{probe.port}}</td>
           <td>{{probe.user}}</td>
+          <td>
+            <button
+              @click.stop="runProbe(probe)"
+              class="btn btn-primary"
+            >
+              Run
+            </button>
+          </td>
         </tr>
       </tbody>
   </table>
