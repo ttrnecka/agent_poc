@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
 import { useWsConnectionStore } from '@/stores/wsStore'
 import { Modal } from "bootstrap";
+import { MESSAGE_TYPE } from '@/stores/messages'
 
 const newProbe = {
     id: null,
@@ -45,11 +46,11 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  ws.sendMessage(11, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
 }
 
 function validateProbe(probe) {
-  ws.sendMessage(11, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
 }
 // a computed ref
 const loadedMessage = computed(() => {

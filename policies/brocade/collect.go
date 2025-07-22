@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -35,11 +36,14 @@ func NewCollectCmd() *cobra.Command {
 
 func collect(cmd *cobra.Command, args []string) error {
 
+	log.Printf("Collecting data for %s version %s", NAME, VERSION)
+	log.Printf("Connecting to host: %s", viper.GetString("endpoint"))
 	client, err := connectToHost()
 	if err != nil {
 		return err
 	}
 	defer client.Close()
+	log.Printf("Connected to host: %s", viper.GetString("endpoint"))
 
 	var commands []string
 	switch VERSION {
@@ -51,20 +55,33 @@ func collect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unknown build %s", VERSION)
 	}
 	code := 0
+	exErr := exitCodeError{}
+	// calls each command and saves each output to tagged file
 	for _, cmd := range commands {
+		cmd_out := []byte(fmt.Sprintf(">>> %s", cmd))
+		log.Printf("Running command: %s", cmd)
 		out, err := runCommand(client, cmd)
 		if err != nil {
+			exErr.Err = err
 			log.Printf("Error running command %s: %v", cmd, err)
 			if exitErr, ok := err.(*ssh.ExitError); ok {
-				code = exitErr.ExitStatus()
+				exErr.Code = exitErr.ExitStatus()
 			} else {
-				code = 255
+				exErr.Code = 255
 			}
 		}
+		out = append(cmd_out, out...)
 		fmt.Println(string(out))
+
+		filename := genearateFilename(cmd)
+		log.Printf("Saving output to file: %s", filename)
+		err = saveFile(viper.GetString("output_folder"), filename, out)
+		if err != nil {
+			return fmt.Errorf("failed to save file %s: %w", filename, err)
+		}
 	}
 	if code != 0 {
-		return &exitCodeError{Code: code, Err: err}
+		return &exErr
 	}
 
 	return nil

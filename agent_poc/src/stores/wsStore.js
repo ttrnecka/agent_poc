@@ -1,12 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
-
-const MESSAGE_TYPE = {
-  'ONLINE': 1,
-  'OFFLINE': 2,
-  'REFRESH': 10
-};
+import { MESSAGE_TYPE } from '@/stores/messages'
 
 export const useWsConnectionStore = defineStore('wsConnection', () => {
   const conn = ref(null) 
@@ -36,13 +31,7 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
     };
 
     conn.value.onopen = function (evt) {
-      const clientId = getClientId();
-      const msg = {
-        Type: 1,
-        Source: clientId,
-        Text: "web_client connected"
-      };
-      conn.value.send(JSON.stringify(msg));
+      sendMessage(MESSAGE_TYPE.ONLINE, null, "web_client connected", null);
     };
   }
 
@@ -55,15 +44,25 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
     return clientId;
   }
 
-  function sendMessage(type, destination, text) {
+  /**
+   * Sends a message over the WebSocket connection.
+   * @param {string} type - The message type.
+   * @param {string|null} destinationId - The destination client ID, or null if not applicable.
+   * @param {string} text - The message text.
+   * @param {string} [session=crypto.randomUUID()] - The session ID.
+   * @returns {string} The session ID used for the message.
+   */
+  function sendMessage(type, destinationId, text, session = crypto.randomUUID()) {
     const clientId = getClientId(); 
     const msg = {
         Type: type,
         Source: clientId,
-        Destination: destination,
-        Text: text
+        Destination: destinationId,
+        Text: text,
+        Session: session
     };
     conn.value.send(JSON.stringify(msg));
+    return session; // Return the session ID for tracking
   }
 
   function handleMessage(msg) {

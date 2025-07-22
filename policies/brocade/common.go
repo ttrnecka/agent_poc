@@ -1,6 +1,12 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"unicode"
+
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh"
 )
@@ -11,7 +17,7 @@ type exitCodeError struct {
 }
 
 func (e *exitCodeError) Error() string {
-	return e.Error()
+	return e.Err.Error()
 }
 
 func (e *exitCodeError) Unwrap() error {
@@ -37,17 +43,57 @@ func connectToHost() (*ssh.Client, error) {
 // Function: RunCommand
 //
 //	Execute command and return only error status
-func runCommand(client *ssh.Client, command string) (string, error) {
+func runCommand(client *ssh.Client, command string) ([]byte, error) {
 	session, err := client.NewSession()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer session.Close()
 
 	out, err := session.CombinedOutput(command)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return string(out), nil
+	return out, nil
+}
+
+func checkFolder(folder string) error {
+	info, err := os.Stat(folder)
+	if err != nil {
+		return err
+	}
+
+	if !info.IsDir() {
+		return fmt.Errorf("path %s is not a directory", folder)
+	}
+	return nil
+}
+
+func genearateFilename(command string) string {
+	return fmt.Sprintf("%s_%s.txt", sanitizeCommand(command), VERSION)
+}
+
+func sanitizeCommand(input string) string {
+	// Replace spaces with underscores
+	s := strings.ReplaceAll(input, " ", "_")
+
+	// Build a new string keeping only valid filename characters
+	var builder strings.Builder
+	for _, r := range s {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == '_' || r == '-' {
+			builder.WriteRune(r)
+		}
+		// else drop the character
+	}
+	return builder.String()
+}
+
+func saveFile(folder, filename string, data []byte) error {
+	filePath := filepath.Join(folder, filename)
+	err := os.WriteFile(filePath, data, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to write file %s: %w", filePath, err)
+	}
+	return nil
 }

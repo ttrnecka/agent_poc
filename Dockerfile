@@ -3,7 +3,7 @@ FROM node:20-alpine AS npm
 
 COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
 
-RUN npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt
+# RUN npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt
 WORKDIR /app
 COPY agent_poc/package*.json ./
 RUN npm ci  --force --loglevel verbose
