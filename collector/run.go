@@ -37,7 +37,7 @@ func parseEnvAssignments(input string) ([]string, []string) {
 func run(mes ws.Message, wsConn *websocket.Conn) {
 	// This function should implement the logic to run the policy
 	// specified in the message. For now, we will just log the action.
-	log.Printf("Running policy for collector %s with message: %s", mes.Source, mes.Text)
+	log.Printf("Running policy for source %s with message: %s", mes.Source, mes.Text)
 	// Here you would typically call the function that executes the policy.
 
 	envs, parts := parseEnvAssignments(mes.Text)
@@ -49,42 +49,72 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 
-	done := make(chan bool)
+	type CommandResult struct {
+		Output []byte
+		Code   int
+	}
+
+	result := make(chan CommandResult)
 
 	go func() {
-		defer close(done)
+		cr := CommandResult{}
 		output, err := cmd.CombinedOutput()
 
+		cr.Output = output
+
 		log.Printf("Command output: %s", output)
-		// Get the exit code
-		// Default exit code
-		exitCode := 0
 
 		// Check if there was an error (non-zero exit or command failure)
 		if err != nil {
 			// If it's an ExitError, we can get the exit code
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				exitCode = exitErr.ExitCode()
+				cr.Code = exitErr.ExitCode()
 			} else {
 				// If it's another kind of error (e.g., command not found), just print it
 				log.Printf("Command execution failed: %v\n", err)
-				return
+				cr.Code = 255
 			}
 		}
-		log.Printf("Exit Code: %d\n", exitCode)
+		log.Printf("Exit Code: %d\n", cr.Code)
+		result <- cr
+		close(result)
 	}()
 
 	for {
 		select {
-		case <-done:
-			err := wsConn.WriteJSON(ws.NewMessage(ws.MSG_FINISHED, *source, "hub", "Collector is going offline"))
+		case cr := <-result:
+			text := "Request succeeded"
+			if cr.Code != 0 {
+				text = "Request failed"
+			}
+			m := ws.NewMessage(ws.MSG_FINISHED, *source, mes.Source, text)
+			m.Session = mes.Session
+			err := wsConn.WriteJSON(m)
 			if err != nil {
-				log.Println("write:", err)
+				log.Printf("Sending FINISHED message failed: %v\n", err)
 				return
 			}
+			log.Printf("Sending FINISHED message suceeded: %v\n", err)
+
+			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, string(cr.Output))
+			m.Session = mes.Session
+			err = wsConn.WriteJSON(m)
+			if err != nil {
+				log.Printf("Sending DATA message failed: %v\n", err)
+				return
+			}
+			log.Printf("Sending DATA message suceeded: %v\n", err)
+
 			return
-		case t := <-ticker.C:
-			fmt.Println("Tick at", t)
+		case <-ticker.C:
+			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
+			m.Session = mes.Session
+			err := wsConn.WriteJSON(m)
+			if err != nil {
+				log.Printf("Sending RUNNING message failed: %v\n", err)
+				return
+			}
+			log.Printf("Sending RUNNING message suceeded: %v\n", err)
 		}
 	}
 }

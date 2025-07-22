@@ -24,6 +24,7 @@ const (
 	MSG_RUN      MessageType = iota + 20 // run probe signal
 	MSG_RUNNING                          // probe is running
 	MSG_FINISHED                         // probe finished
+	MSG_DATA
 )
 
 type Message struct {
