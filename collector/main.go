@@ -122,7 +122,7 @@ func main() {
 		messageHandler()
 	}()
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	err = refresh()
 	if err != nil {

@@ -8,7 +8,7 @@ echo $VERSION
 # STEP 2: Build the ldflags
 
 LDFLAGS=(
-  "-X 'main.Version=${VERSION}'"
+  "-X 'main.VERSION=${VERSION}'"
 )
 
 # STEP 3: Actual Go build process

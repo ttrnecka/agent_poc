@@ -11,7 +11,7 @@ import (
 
 // all validation CMDs needs to have retrun code 0
 var validationCmds []string = []string{
-	"switchshow",
+	"version",
 }
 
 // runCmd represents the run command

@@ -10,15 +10,18 @@ import (
 )
 
 var commandsV100 []string = []string{
-	"switchshow",
 	"version",
 }
 
 var commandsV101 []string = []string{
-	"switchshow",
 	"version",
-	"fabricshow",
-	"agshow",
+	"switchshow",
+}
+
+var commandsV102 []string = []string{
+	"version",
+	"switchshow",
+	// "fabricshow",
 }
 
 // runCmd represents the run command
@@ -51,6 +54,8 @@ func collect(cmd *cobra.Command, args []string) error {
 		commands = commandsV100
 	case "1.0.1":
 		commands = commandsV101
+	case "1.0.2":
+		commands = commandsV102
 	default:
 		return fmt.Errorf("unknown build %s", VERSION)
 	}
