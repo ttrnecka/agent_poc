@@ -7,8 +7,9 @@ export const useSessionStore = defineStore('session', () => {
 
   // action: handle incoming websocket data
   function handleWebSocketMessage(data) {
-    if (data.session) {
-      sessions[data.session] = data;
+    console.log('📥 WebSocket message received:', data);
+    if (data.Session) {
+      sessions[data.Session] = data;
     }
   }
 

@@ -2,12 +2,15 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
 import { MESSAGE_TYPE } from '@/stores/messages'
+import { useSessionStore } from '@/stores/sessionStore';
+
 
 export const useWsConnectionStore = defineStore('wsConnection', () => {
   const conn = ref(null) 
   const wsUrl = ref(import.meta.env.VITE_WS_PROTOCOL + '://' + import.meta.env.VITE_API_HOST + '/ws');
 
   const apiStore = useApiStore();
+  const store = useSessionStore();
   
    function connect() {
     conn.value = new WebSocket(wsUrl.value);
@@ -29,6 +32,16 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
         }
       }
     };
+
+    
+    conn.value.addEventListener('message', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        store.handleWebSocketMessage(data);
+      } catch (err) {
+        console.error('Invalid WebSocket message:', err);
+      }
+    });
 
     conn.value.onopen = function (evt) {
       sendMessage(MESSAGE_TYPE.ONLINE, null, "web_client connected", null);

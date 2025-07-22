@@ -117,7 +117,7 @@ func main() {
 					refresh()
 				}
 				if mes.Type == ws.MSG_RUN {
-					run(mes)
+					run(mes, c)
 				}
 			}
 		}
