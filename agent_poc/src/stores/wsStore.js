@@ -37,7 +37,9 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
     conn.value.addEventListener('message', (event) => {
       try {
         const data = JSON.parse(event.data);
-        store.handleWebSocketMessage(data);
+        if (data.Destination == getClientId()) {
+          store.handleWebSocketMessage(data);
+        }
       } catch (err) {
         console.error('Invalid WebSocket message:', err);
       }

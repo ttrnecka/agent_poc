@@ -30,7 +30,7 @@ func GetHub() *Hub {
 
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte, 10),
+		broadcast:  make(chan []byte, 100),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),

@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
 var source = flag.String("source", "collector1", "name of collector")
+
+var mu sync.Mutex
 
 // reads the collector config and pulls required policies and their versions
 func refresh() error {
@@ -111,16 +114,12 @@ func main() {
 				log.Println("read:", err)
 				return
 			}
-			log.Printf("recv: %v", mes)
-			if mes.Destination == *source {
-				if mes.Type == ws.MSG_REFRESH {
-					refresh()
-				}
-				if mes.Type == ws.MSG_RUN {
-					run(mes, c)
-				}
-			}
+			messages <- Message{Message: mes, c: c}
 		}
+	}()
+
+	go func() {
+		messageHandler()
 	}()
 
 	ticker := time.NewTicker(10 * time.Second)
@@ -135,7 +134,9 @@ func main() {
 			return
 		case <-ticker.C:
 			// err := c.WriteMessage(websocket.TextMessage, []byte("ONLINE"))
+			mu.Lock()
 			err := c.WriteJSON(ws.NewMessage(ws.MSG_ONLINE, *source, "hub", "Collector is online"))
+			mu.Unlock()
 			if err != nil {
 				log.Println("write:", err)
 				return
@@ -146,12 +147,16 @@ func main() {
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
 			// err := c.WriteMessage(websocket.TextMessage, []byte("OFFLINE"))
+			mu.Lock()
 			err := c.WriteJSON(ws.NewMessage(ws.MSG_OFFLINE, *source, "hub", "Collector is going offline"))
+			mu.Unlock()
 			if err != nil {
 				log.Println("write:", err)
 				return
 			}
+			mu.Lock()
 			err = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			mu.Unlock()
 			if err != nil {
 				log.Println("write close:", err)
 				return

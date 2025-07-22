@@ -44,6 +44,16 @@ type Client struct {
 	send chan []byte
 }
 
+func setupPongHandler(conn *websocket.Conn) {
+	remoteAddr := conn.RemoteAddr().String()
+
+	conn.SetPongHandler(func(appData string) error {
+		log.Printf("Received pong from client %s (appData: %q)\n", remoteAddr, appData)
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+}
+
 // readPump pumps messages from the websocket connection to the hub.
 //
 // The application runs readPump in a per-connection goroutine. The application
@@ -56,15 +66,17 @@ func (c *Client) readPump() {
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+	setupPongHandler(c.conn)
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error: %v", err)
-			}
+			log.Printf("read error: %v", err)
+			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			// 	log.Printf("error: %v", err)
+			// }
 			break
 		}
+		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.hub.broadcast <- message
 	}
@@ -93,10 +105,14 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				log.Printf("nextwrite error: %v", err)
 				return
 			}
-			w.Write(message)
-
+			_, err = w.Write(message)
+			if err != nil {
+				log.Printf("write error: %v", err)
+				// return
+			}
 			// If you uncomment this all the json messages will be sent in one go and the client will have to handle it
 			// in the future you may consider sending array of messages instead of one by one
 			// frontend has already been updated to handle this by newline delimited messages
@@ -108,11 +124,13 @@ func (c *Client) writePump() {
 			// }
 
 			if err := w.Close(); err != nil {
+				log.Printf("close error: %v", err)
 				return
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Printf("write ping error: %v", err)
 				return
 			}
 		}

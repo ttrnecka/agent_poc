@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch  } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
 import { useWsConnectionStore } from '@/stores/wsStore'
 import { Modal } from "bootstrap";
 import { MESSAGE_TYPE } from '@/stores/messages'
+import { useSessionStore } from '@/stores/sessionStore'
 
 const newProbe = {
     id: null,
@@ -17,14 +18,23 @@ const newProbe = {
 }
 const apiStore = useApiStore()
 const ws = useWsConnectionStore()
+const sessionStore = useSessionStore()
+
 const state = ref({
   probeModal: null,
-  newProbe: newProbe
+  taskModal: null,
+  newProbe: newProbe,
+  task: {
+    title: null,
+    message: null,
+    session: null
+  }
 })
 const loadingText = "Loading..."
 
 onMounted(() => {
     state.value.probeModal = new Modal('#probeModal', { keyboard: false, backdrop: "static" })
+    state.value.taskModal = new Modal('#taskModal', { keyboard: false, backdrop: "static" })
 })
 
 function showProbeModal() {
@@ -46,16 +56,37 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
+  state.value.task.message = "Waiting for data...";
+  state.value.task.session = session;
+  state.value.taskModal.show();
 }
 
 function validateProbe(probe) {
-  ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
+  state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
+  state.value.task.message = "Waiting for data...";
+  state.value.task.session = session;
+  state.value.taskModal.show();
 }
 // a computed ref
 const loadedMessage = computed(() => {
   return apiStore.fetchError ? apiStore.fetchError.message : loadingText
 })
+
+const sessionData = computed(() => sessionStore.sessions[state.value.task.session]);
+
+watch(sessionData, (newData) => {
+  if (newData) {
+    console.log(`New message for session ${state.value.task.session}:`, newData);
+    state.value.task.message = newData.Text;
+    // Handle message logic here
+    
+    // attach this to onclose on tha taskModal
+    // sessionStore.clearSession(state.value.task.session); // optional
+  }
+});
 
 </script>
 <template>
@@ -86,18 +117,20 @@ const loadedMessage = computed(() => {
           <td>{{probe.port}}</td>
           <td>{{probe.user}}</td>
           <td>
-            <button
-              @click.stop="runProbe(probe)"
-              class="btn btn-primary"
-            >
-              Run
-            </button>
-            <button
-              @click.stop="validateProbe(probe)"
-              class="btn btn-primary"
-            >
-              Validate
-            </button>
+            <div class="d-flex gap-2">
+              <button
+                @click.stop="runProbe(probe)"
+                class="btn btn-primary"
+              >
+                Run
+              </button>
+              <button
+                @click.stop="validateProbe(probe)"
+                class="btn btn-primary"
+              >
+                Validate
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -163,6 +196,20 @@ const loadedMessage = computed(() => {
               </div>
               <button type="submit" class="btn btn-primary">Submit</button>
             </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="taskModalLabel">Task: {{ state.task.title }}</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <pre>{{ state.task.message }}</pre>
           </div>
         </div>
       </div>
