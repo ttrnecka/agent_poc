@@ -46,7 +46,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	cmd := exec.Command(fmt.Sprintf("./bin/%s", parts[0]), parts[1:]...)
 	cmd.Env = append(os.Environ(), envs...)
 
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(1000 * time.Millisecond)
 	defer ticker.Stop()
 
 	type CommandResult struct {
