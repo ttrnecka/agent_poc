@@ -9,11 +9,17 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 
 	"github.com/ttrnecka/agent_poc/api"
 )
 
+var refreshMU sync.Mutex
+
+// make refresh blocking and not refresh mutliple times in paraller
 func refresh() error {
+	refreshMU.Lock()
+	defer refreshMU.Unlock()
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
 	res, err := http.Get(requestURL)
 	if err != nil {
