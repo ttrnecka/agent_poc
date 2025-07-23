@@ -42,7 +42,9 @@ type Client struct {
 	send chan []byte
 }
 
-// serveWs handles websocket requests from the peer.
+// ServeWs handles WebSocket requests from clients. It upgrades the HTTP connection to a WebSocket,
+// creates a new client instance with a buffered send channel, registers the client with the hub,
+// and starts goroutines for reading from and writing to the WebSocket connection.
 func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -50,17 +52,18 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	// create cliend with 256 send channel
+
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
 	go client.writePump()
 	go client.readPump()
 }
 
-// pong will extend deadline for connection and logs message for debugging
+// setupPongHandler sets a custom Pong handler for the given WebSocket connection.
+// The handler logs the receipt of a Pong message from the client, including the client's remote address and any application data.
+// It also updates the read deadline to ensure the connection remains alive.
+// This function helps in detecting and handling client responsiveness in WebSocket communication.
 func setupPongHandler(conn *websocket.Conn) {
 	remoteAddr := conn.RemoteAddr().String()
 	conn.SetPongHandler(func(appData string) error {
