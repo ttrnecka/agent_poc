@@ -28,8 +28,7 @@ func ProbeApiHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		fmt.Fprint(w, output("probes.json"))
 	case "POST":
-
-		if err := save(r.Body); err != nil {
+		if err := saveProbes(r.Body); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "Save err : %v", err)
 			return
@@ -39,22 +38,7 @@ func ProbeApiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func loadProbe(uuid string) (*Probe, error) {
-// 	data := output("probes.json")
-// 	var unm []Probe
-// 	err := json.Unmarshal([]byte(data), &unm)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	for _, p := range unm {
-// 		if p.Id == uuid {
-// 			return &p, nil
-// 		}
-// 	}
-// 	return nil, fmt.Errorf("Probe with uuid %s not found", uuid)
-// }
-
-func save(r io.Reader) error {
+func saveProbes(r io.Reader) error {
 	outputFileName := "data/probes.json"
 
 	// Create or open the output file for writing.
@@ -63,32 +47,24 @@ func save(r io.Reader) error {
 		return err
 	}
 	defer outputFile.Close()
-	var unm []Probe
-	err = json.NewDecoder(r).Decode(&unm)
+
+	var probes []Probe
+	err = json.NewDecoder(r).Decode(&probes)
 	if err != nil {
 		return err
 	}
 
-	// we broadcast the new probes to all connected clients
-	hub := ws.GetHub()
 	collectors := make(map[string]bool)
 
-	for i, p := range unm {
+	for i, p := range probes {
 		collectors[p.Collector] = true
 		if p.Id == "" {
-			unm[i].Id = uuid.New().String()
+			probes[i].Id = uuid.New().String()
 		}
 	}
 
-	for collector := range collectors {
-		bmessage, err := json.Marshal(ws.NewMessage(ws.MSG_REFRESH, "hub", collector, "Policy updated"))
-		if err != nil {
-			return fmt.Errorf("failed to marshal message: %v", err)
-		}
-		hub.BroadcastMessage(bmessage)
-	}
 	var buf bytes.Buffer
-	err = json.NewEncoder(&buf).Encode(unm)
+	err = json.NewEncoder(&buf).Encode(probes)
 	if err != nil {
 		return err
 	}
@@ -97,6 +73,16 @@ func save(r io.Reader) error {
 	_, err = io.Copy(outputFile, &buf)
 	if err != nil {
 		return err
+	}
+
+	// once saved we broadcast the new probes to all connected clients
+	hub := ws.GetHub()
+	for collector := range collectors {
+		bmessage, err := json.Marshal(ws.NewMessage(ws.MSG_REFRESH, "hub", collector, "Policy updated"))
+		if err != nil {
+			return fmt.Errorf("failed to marshal message: %v", err)
+		}
+		hub.BroadcastMessage(bmessage)
 	}
 
 	return nil
