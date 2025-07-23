@@ -15,17 +15,14 @@ type Message struct {
 var messages = make(chan Message, 100)
 
 func messageHandler() {
-	for {
-		select {
-		case msg := <-messages:
-			log.Printf("recv: %v", msg)
-			if msg.Destination == *source {
-				if msg.Type == ws.MSG_REFRESH {
-					refresh()
-				}
-				if msg.Type == ws.MSG_RUN {
-					run(msg.Message, msg.c)
-				}
+	for msg := range messages {
+		log.Printf("recv: %v", msg)
+		if msg.Destination == *source {
+			if msg.Type == ws.MSG_REFRESH {
+				refresh()
+			}
+			if msg.Type == ws.MSG_RUN {
+				run(msg.Message, msg.c)
 			}
 		}
 	}
