@@ -33,20 +33,36 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-// Client is a middleman between the websocket connection and the hub.
+// Client is a middleman between the websocket connection and the hub for one websocket connection
 type Client struct {
 	hub *Hub
 
-	// The websocket connection.
 	conn *websocket.Conn
 
-	// Buffered channel of outbound messages.
 	send chan []byte
 }
 
+// serveWs handles websocket requests from the peer.
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// create cliend with 256 send channel
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client.hub.register <- client
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
+	go client.writePump()
+	go client.readPump()
+}
+
+// pong will extend deadline for connection and logs message for debugging
 func setupPongHandler(conn *websocket.Conn) {
 	remoteAddr := conn.RemoteAddr().String()
-
 	conn.SetPongHandler(func(appData string) error {
 		log.Printf("Received pong from client %s (appData: %q)\n", remoteAddr, appData)
 		conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -69,15 +85,18 @@ func (c *Client) readPump() {
 	setupPongHandler(c.conn)
 	for {
 		_, message, err := c.conn.ReadMessage()
+		// if we cannot read message, we close the connection and drop the client list
 		if err != nil {
 			log.Printf("read error: %v", err)
-			// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			// 	log.Printf("error: %v", err)
-			// }
 			break
 		}
+		// refresh deadline may be required if the client is not sending pongs to my pings
+		// this may happend because the client is processing request in the same go routine that
+		// reads the socket and the requets takes longer than deadline
 		c.conn.SetReadDeadline(time.Now().Add(pongWait))
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+
+		// right now every message is broadcasted to all clients (for POC purposes)
 		c.hub.broadcast <- message
 	}
 }
@@ -95,10 +114,11 @@ func (c *Client) writePump() {
 	}()
 	for {
 		select {
+		// Client received message to send
 		case message, ok := <-c.send:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			// The hub closed the channel.
 			if !ok {
-				// The hub closed the channel.
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -108,6 +128,8 @@ func (c *Client) writePump() {
 				log.Printf("nextwrite error: %v", err)
 				return
 			}
+			// Write the message to the websocket connection.
+			// do not return if there is failure as we want to run Close
 			_, err = w.Write(message)
 			if err != nil {
 				log.Printf("write error: %v", err)
@@ -135,21 +157,4 @@ func (c *Client) writePump() {
 			}
 		}
 	}
-}
-
-// serveWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-	client.hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
 }

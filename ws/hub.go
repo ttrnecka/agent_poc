@@ -44,13 +44,16 @@ func (h *Hub) BroadcastMessage(message []byte) {
 func (h *Hub) Run() {
 	for {
 		select {
+		// register client
 		case client := <-h.register:
 			h.clients[client] = true
+		//underegister client and close its send channel
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
 			}
+		// broadcast message to all clients
 		case message := <-h.broadcast:
 			var msg Message
 			if err := json.Unmarshal(message, &msg); err != nil {
@@ -58,8 +61,8 @@ func (h *Hub) Run() {
 			} else {
 				fmt.Printf("recv: %+v\n", msg)
 			}
-			// ...existing code...
-
+			// Send the message to all registered clients
+			// if the client's send channel is full, close it and remove the client
 			for client := range h.clients {
 				select {
 				case client.send <- message:
