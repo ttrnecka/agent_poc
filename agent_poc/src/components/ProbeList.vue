@@ -27,7 +27,8 @@ const state = ref({
   task: {
     title: null,
     message: null,
-    session: null
+    session: null,
+    state: "WAITING" // "WAITING", "RUNNING", "FINISHED", "ERROR"
   }
 })
 const loadingText = "Loading..."
@@ -59,6 +60,7 @@ function runProbe(probe) {
   const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
   state.value.task.message = "Waiting for data...";
+  state.value.task.state = "RUNNING";
   state.value.task.session = session;
   state.value.taskModal.show();
 }
@@ -67,6 +69,7 @@ function validateProbe(probe) {
   const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port} --output_folder /tmp`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
   state.value.task.message = "Waiting for data...";
+  state.value.task.state = "RUNNING";
   state.value.task.session = session;
   state.value.taskModal.show();
 }
@@ -81,10 +84,27 @@ watch(sessionData, (newData) => {
   if (newData) {
     console.log(`New message for session ${state.value.task.session}:`, newData);
     state.value.task.message = newData.Text;
+    if (newData.Type == MESSAGE_TYPE.FINISHED_ERR) {
+      state.value.task.state = "ERROR";
+    }
+    if (newData.Type == MESSAGE_TYPE.FINISHED_OK) {
+      state.value.task.state = "FINISHED";
+    }
     // Handle message logic here
     
     // attach this to onclose on tha taskModal
     // sessionStore.clearSession(state.value.task.session); // optional
+  }
+});
+
+const stateClass = computed(() => {
+  switch (state.value.task.state) {
+    case "FINISHED":
+      return "text-success";
+    case "ERROR":
+      return "text-danger";
+    default:
+      return "";
   }
 });
 
@@ -204,7 +224,7 @@ watch(sessionData, (newData) => {
     <div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
-          <div class="modal-header">
+          <div class="modal-header" :class="stateClass">
             <h1 class="modal-title fs-5" id="taskModalLabel">Task: {{ state.task.title }}</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
@@ -224,5 +244,11 @@ watch(sessionData, (newData) => {
 }
 .probe-row:hover td {
   background: #cecece;
+}
+.text-success {
+  background-color: rgb(138, 237, 138);
+}
+.text-danger {
+  background-color: rgb(255 194 194);
 }
 </style>

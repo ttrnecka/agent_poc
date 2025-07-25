@@ -86,10 +86,12 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 		select {
 		case cr := <-result:
 			text := "Request succeeded"
+			mc := ws.MSG_FINISHED_OK
 			if cr.Code != 0 {
 				text = "Request failed"
+				mc = ws.MSG_FINISHED_ERR
 			}
-			m := ws.NewMessage(ws.MSG_FINISHED, *source, mes.Source, text)
+			m := ws.NewMessage(mc, *source, mes.Source, text)
 			m.Session = mes.Session
 			mu.Lock()
 			err := wsConn.WriteJSON(m)
