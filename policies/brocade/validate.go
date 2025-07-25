@@ -44,8 +44,6 @@ func validate(cmd *cobra.Command, args []string) error {
 	code := 0
 	exErr := exitCodeError{}
 	for _, cmd := range validationCmds {
-		cmd_out := []byte(fmt.Sprintf(">>> %s", cmd))
-		log.Printf("Running command: %s", cmd)
 		out, err := runCommand(client, cmd)
 		if err != nil {
 			exErr.Err = err
@@ -56,7 +54,6 @@ func validate(cmd *cobra.Command, args []string) error {
 				exErr.Code = 255
 			}
 		}
-		out = append(cmd_out, out...)
 		fmt.Println(string(out))
 
 		filename := genearateFilename(cmd)

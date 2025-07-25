@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -15,7 +16,10 @@ import (
 )
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
+var ingest = flag.String("ingest", "localhost:8889", "ingest service address")
 var source = flag.String("source", "collector1", "name of collector")
+var watchPath = flag.String("out", "/data/out", "core folder where collectors move files saved by plugin for sending")
+var tmpPath = flag.String("tmp", "/data/tmp", "root folder where collector instructs plugin to store data")
 
 var mu sync.Mutex
 
@@ -29,6 +33,14 @@ func connectWS(host string) (*websocket.Conn, error) {
 
 func main() {
 	flag.Parse()
+
+	if err := os.MkdirAll(*tmpPath, 0755); err != nil {
+		log.Println(fmt.Errorf("failed to create directory: %w", err))
+	}
+
+	if err := os.MkdirAll(*watchPath, 0755); err != nil {
+		log.Println(fmt.Errorf("failed to create directory: %w", err))
+	}
 
 	done := make(chan struct{})
 	interrupt := make(chan os.Signal, 1)
@@ -61,10 +73,17 @@ func main() {
 		}
 	}()
 
+	// kick off uploader/watcher
+	// uploadQueue := NewUploadQueue(10) // 10 workers
+	// watcher := NewRecursiveWatcher(*watchPath, uploadQueue)
+
+	// go watcher.Start()
+
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	// close when done, sends HB message and handles interrups gracefully
+	// eventLoop(c, ticker, done, interrupt, uploadQueue, watcher)
 	eventLoop(c, ticker, done, interrupt)
 }
 
@@ -102,6 +121,7 @@ func cleanShutdown(c *websocket.Conn, done chan struct{}) {
 }
 
 func eventLoop(c *websocket.Conn, ticker *time.Ticker, done chan struct{}, interrupt chan os.Signal) {
+	// func eventLoop(c *websocket.Conn, ticker *time.Ticker, done chan struct{}, interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *RecursiveWatcher) {
 	for {
 		select {
 		case <-done:
@@ -113,6 +133,8 @@ func eventLoop(c *websocket.Conn, ticker *time.Ticker, done chan struct{}, inter
 			}
 		case <-interrupt:
 			cleanShutdown(c, done)
+			// watcher.Stop()
+			// uploadQueue.Stop()
 			return
 		}
 	}

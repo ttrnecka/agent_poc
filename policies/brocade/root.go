@@ -12,7 +12,7 @@ import (
 
 func initConfig() error {
 	log.Printf("Initializing configuration for %s version %s", NAME, VERSION)
-	log.Printf("Checking environment variables and flags")
+	log.Print("Checking environment variables and flags")
 	log.Print("Checking if CLI_USER is set")
 	err := viper.BindEnv("user", "CLI_USER")
 
@@ -61,7 +61,7 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig()
 	},
-	SilenceErrors: true,
+	// SilenceErrors: true,
 }
 
 func Execute() {

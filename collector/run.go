@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -41,6 +42,18 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	// Here you would typically call the function that executes the policy.
 
 	envs, parts := parseEnvAssignments(mes.Text)
+
+	output_folder, err := os.MkdirTemp(*tmpPath, parts[0])
+	if err != nil {
+		panic(err)
+	}
+
+	defer func() {
+		processFolder(output_folder, *watchPath, *source, parts[0])
+		os.RemoveAll(output_folder)
+	}()
+
+	parts = append(parts, "--output_folder", output_folder)
 	log.Printf("Parsed environment variables: %v", envs)
 	log.Printf("Parsed command parts: %v", parts)
 	cmd := exec.Command(fmt.Sprintf("./bin/%s", parts[0]), parts[1:]...)
@@ -137,4 +150,64 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 			log.Printf("Sending RUNNING message suceeded: %v\n", err)
 		}
 	}
+}
+
+func processFolder(src_folder, dest_folder, collector, probe string) {
+
+	// Read all entries in the source directory
+	entries, err := os.ReadDir(src_folder)
+	if err != nil {
+		log.Println(fmt.Errorf("failed to read source directory: %w", err))
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Skip subdirectories (you can recurse if needed)
+			continue
+		}
+
+		srcPath := filepath.Join(src_folder, entry.Name())
+		destPath := filepath.Join(dest_folder, entry.Name())
+
+		timestamp, device, endpoint, err := parseFilename(entry.Name())
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		// Read file content
+		content, err := os.ReadFile(srcPath)
+		if err != nil {
+			log.Println(fmt.Errorf("failed to read file %s: %w", srcPath, err))
+		}
+
+		// Prepend namePrefix
+		modifiedContent := []byte("---collector:\t" + collector + "\n" +
+			"---probe:\t" + probe + "\n" +
+			"---timestamp:\t" + timestamp + "\n" +
+			"---device:\t" + stripAfterLast(device, ":") + "\n" +
+			"---endpoint:\t" + stripAfterLast(endpoint, ".") + "\n" +
+			string(content))
+
+		// Write modified content to destination
+		err = os.WriteFile(destPath, modifiedContent, 0644)
+		if err != nil {
+			log.Println(fmt.Errorf("failed to write file %s: %w", destPath, err))
+		}
+	}
+}
+
+func parseFilename(input string) (timestamp, device, rest string, err error) {
+	parts := strings.SplitN(input, "_", 3)
+	if len(parts) != 3 {
+		return "", "", "", fmt.Errorf("input string does not match expected format")
+	}
+	return parts[0], parts[1], parts[2], nil
+}
+
+func stripAfterLast(s, subs string) string {
+	if idx := strings.LastIndex(s, subs); idx != -1 {
+		return s[:idx]
+	}
+	return s
 }

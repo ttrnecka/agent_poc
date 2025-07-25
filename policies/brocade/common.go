@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/spf13/viper"
@@ -71,8 +72,9 @@ func checkFolder(folder string) error {
 	return nil
 }
 
+// TODO if this collector is enhanced so it pulls from more that just that on switch, the endpoint needs to be properly pointin to corect device
 func genearateFilename(command string) string {
-	return fmt.Sprintf("%s_%s.txt", sanitizeCommand(command), VERSION)
+	return fmt.Sprintf("%d_%s_%s.txt", time.Now().UnixMicro(), viper.GetString("endpoint"), sanitizeCommand(command))
 }
 
 func sanitizeCommand(input string) string {

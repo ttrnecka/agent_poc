@@ -73,7 +73,6 @@ func collect(cmd *cobra.Command, args []string) error {
 	exErr := exitCodeError{}
 	// calls each command and saves each output to tagged file
 	for _, cmd := range commands {
-		cmd_out := []byte(fmt.Sprintf(">>> %s", cmd))
 		out, err := runCommand(client, cmd)
 		if err != nil {
 			exErr.Err = err
@@ -84,7 +83,6 @@ func collect(cmd *cobra.Command, args []string) error {
 				exErr.Code = 255
 			}
 		}
-		out = append(cmd_out, out...)
 		fmt.Println(string(out))
 
 		filename := genearateFilename(cmd)
