@@ -4,5 +4,7 @@ export const MESSAGE_TYPE = {
   'REFRESH': 10,
   'RUN': 20,
   'RUNNING': 21,
-  'FINISHED': 22
+  'FINISHED_OK': 22,
+  'FINISHED_ERR': 23,
+  'DATA': 24
 };

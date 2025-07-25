@@ -5,6 +5,16 @@ services:
       - "8888:8888"
     networks:
       - agent_poc_network
+  ingestion_server:
+    build:
+      context: ./ingestion_server
+    ports:
+      - "8889:8888"
+    networks:
+      - agent_poc_network
+    volumes:
+      - ./uploads:/data
+    command: ["-upload-dir=/data"]
   collector1:
     build:
       context: ./collector
@@ -23,15 +33,6 @@ services:
     command: ["--addr", "web:8888", "--source", "collector2"]
     depends_on:
       - web
-  # collector3:
-  #   build:
-  #     context: ./collector
-  #   image: collector:test
-  #   networks:
-  #     - agent_poc_network
-  #   command: ["--addr", "web:8888", "--source", "collector3"]
-  #   depends_on:
-  #     - web
   switch1:
     image: trnecka/mock_server:latest
     networks:

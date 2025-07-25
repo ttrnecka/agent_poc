@@ -21,7 +21,15 @@ var commandsV101 []string = []string{
 var commandsV102 []string = []string{
 	"version",
 	"switchshow",
-	// "fabricshow",
+	"fabricshow",
+	"licenseshow",
+}
+
+var commandsV103 []string = []string{
+	"version",
+	"switchshow",
+	"fabricshow",
+	"license --show",
 }
 
 // runCmd represents the run command
@@ -56,15 +64,16 @@ func collect(cmd *cobra.Command, args []string) error {
 		commands = commandsV101
 	case "1.0.2":
 		commands = commandsV102
+	case "1.0.3":
+		commands = commandsV103
 	default:
 		return fmt.Errorf("unknown build %s", VERSION)
 	}
-	code := 0
+
 	exErr := exitCodeError{}
 	// calls each command and saves each output to tagged file
 	for _, cmd := range commands {
 		cmd_out := []byte(fmt.Sprintf(">>> %s", cmd))
-		log.Printf("Running command: %s", cmd)
 		out, err := runCommand(client, cmd)
 		if err != nil {
 			exErr.Err = err
@@ -85,7 +94,7 @@ func collect(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("failed to save file %s: %w", filename, err)
 		}
 	}
-	if code != 0 {
+	if exErr.Code != 0 {
 		return &exErr
 	}
 

@@ -21,9 +21,10 @@ const (
 
 // session messages
 const (
-	MSG_RUN      MessageType = iota + 20 // run probe signal
-	MSG_RUNNING                          // probe is running
-	MSG_FINISHED                         // probe finished
+	MSG_RUN          MessageType = iota + 20 // run probe signal
+	MSG_RUNNING                              // probe is running
+	MSG_FINISHED_OK                          // probe finished ok
+	MSG_FINISHED_ERR                         // probe finished with error
 	MSG_DATA
 )
 

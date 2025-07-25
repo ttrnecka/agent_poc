@@ -33,6 +33,8 @@ RUN chmod +x build.sh
 RUN dos2unix ./build.sh
 RUN bash ./build.sh 1.0.0
 RUN bash ./build.sh 1.0.1
+RUN bash ./build.sh 1.0.2
+RUN bash ./build.sh 1.0.3
 
 # final stage
 FROM alpine 

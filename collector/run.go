@@ -109,7 +109,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 				sb.WriteString("\n")
 			}
 
-			sb.WriteString(fmt.Sprintf("Exit Code: %d", cr.Code))
+			// sb.WriteString(fmt.Sprintf("Exit Code: %d", cr.Code))
 			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, sb.String())
 			m.Session = mes.Session
 			mu.Lock()
