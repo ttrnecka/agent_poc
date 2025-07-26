@@ -7,7 +7,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 
 export const useWsConnectionStore = defineStore('wsConnection', () => {
   const conn = ref(null) 
-  const wsUrl = ref(import.meta.env.VITE_WS_PROTOCOL + '://' + import.meta.env.VITE_API_HOST + '/ws');
+  const wsUrl = ref(import.meta.env.VITE_WS_PROTOCOL + '://' + location.host + '/ws');
 
   const apiStore = useApiStore();
   const store = useSessionStore();
