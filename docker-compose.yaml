@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_nginx
+    image: poc_nginx:0.0.1
     ports:
       - "80:80"
     networks:
@@ -15,6 +16,7 @@ services:
       dockerfile: Dockerfile_web
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_web:0.0.1
     ports:
       - "8888:8888"
     networks:
@@ -24,6 +26,7 @@ services:
       context: ./ingestion_server
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_ings:0.0.1
     ports:
       - "8889:8888"
     networks:
@@ -36,7 +39,7 @@ services:
       context: ./collector
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
-    image: collector:test
+    image: poc_collector:0.0.1
     networks:
       - agent_poc_network
     command: ["--addr", "web:8888", "--source", "collector1"]
@@ -47,7 +50,7 @@ services:
       context: ./collector
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
-    image: collector:test
+    image: poc_collector:0.0.1
     networks:
       - agent_poc_network
     command: ["--addr", "web:8888", "--source", "collector2"]
