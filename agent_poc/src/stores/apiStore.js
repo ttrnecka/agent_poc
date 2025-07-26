@@ -10,15 +10,15 @@ export const useApiStore = defineStore('api', () => {
   const httpUrl = ref(import.meta.env.VITE_HTTP_PROTOCOL + '://' + import.meta.env.VITE_API_HOST);
 
   const policiesUrl = computed(() => {
-    return `${httpUrl.value}${import.meta.env.VITE_APP_POLICY_ENDPOINT}`; 
+    return `${import.meta.env.VITE_APP_POLICY_ENDPOINT}`; 
   })
 
   const probesUrl = computed(() => {
-    return `${httpUrl.value}${import.meta.env.VITE_APP_PROBE_ENDPOINT}`; 
+    return `${import.meta.env.VITE_APP_PROBE_ENDPOINT}`; 
   })
 
   const collectorsUrl = computed(() => {
-    return `${httpUrl.value}${import.meta.env.VITE_APP_COLLECTOR_ENDPOINT}`;
+    return `${import.meta.env.VITE_APP_COLLECTOR_ENDPOINT}`;
   })
   
   async function load(url,ref) {

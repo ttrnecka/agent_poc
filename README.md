@@ -8,7 +8,10 @@ go run .
 
 npm run build
 
-
+# Zscaller
+Use 
+set IMPORT_ZSCALER_CERT=true
+before starting the docker compose up
 # To deploy gui + backend
 
 docker build -t agent_poc:test . 

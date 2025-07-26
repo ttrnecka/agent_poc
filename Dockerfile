@@ -1,9 +1,16 @@
 # build stage
 FROM node:20-alpine AS npm
+ARG IMPORT_ZSCALER_CERT=false
 
-COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+COPY zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
 
-RUN npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt
+RUN if [ "$IMPORT_ZSCALER_CERT" = "true" ]; then \
+      cp /tmp/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt && \
+      npm config set cafile /usr/local/share/ca-certificates/zscaler-root-ca.crt \
+    else \
+      echo "Skipping Zscaler cert install"; \
+    fi
+
 WORKDIR /app
 COPY agent_poc/package*.json ./
 RUN npm ci  --force --loglevel verbose
@@ -11,12 +18,19 @@ COPY agent_poc/ .
 RUN npm run build
 
 FROM golang:1.23-alpine AS build
+ARG IMPORT_ZSCALER_CERT=false
 
-COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+COPY zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
 
 ENV CGO_ENABLED=0
 
-RUN update-ca-certificates
+RUN if [ "$IMPORT_ZSCALER_CERT" = "true" ]; then \
+      cp /tmp/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt && \
+      update-ca-certificates \
+    else \
+      echo "Skipping Zscaler cert install"; \
+    fi
+
 RUN apk update && apk add bash ca-certificates dos2unix && update-ca-certificates 2>/dev/null
 
 WORKDIR /app
