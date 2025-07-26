@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
 import { MESSAGE_TYPE } from '@/stores/messages'
 import { useSessionStore } from '@/stores/sessionStore';
+import { v4 as uuidv4 } from 'uuid';
 
 
 export const useWsConnectionStore = defineStore('wsConnection', () => {
@@ -53,7 +54,7 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
   function getClientId() {
     let clientId = localStorage.getItem("client_id");
     if (!clientId) {
-      clientId = "web_client_" + crypto.randomUUID(); // Secure, random
+      clientId = "web_client_" + uuidv4(); // Secure, random
       localStorage.setItem("client_id", clientId);
     }
     return clientId;
@@ -64,10 +65,10 @@ export const useWsConnectionStore = defineStore('wsConnection', () => {
    * @param {string} type - The message type.
    * @param {string|null} destinationId - The destination client ID, or null if not applicable.
    * @param {string} text - The message text.
-   * @param {string} [session=crypto.randomUUID()] - The session ID.
+   * @param {string} [session=uuidv4()] - The session ID.
    * @returns {string} The session ID used for the message.
    */
-  function sendMessage(type, destinationId, text, session = crypto.randomUUID()) {
+  function sendMessage(type, destinationId, text, session = uuidv4()) {
     const clientId = getClientId(); 
     const msg = {
         Type: type,
