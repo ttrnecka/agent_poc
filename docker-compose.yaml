@@ -1,11 +1,20 @@
 services:
-  web:
-    build: 
+  nginx:
+    build:
       context: .
+      dockerfile: Dockerfile_nginx
+    ports:
+      - "80:80"
+    networks:
+      - agent_poc_network
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile_web
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     ports:
-      - "80:8888"
+      - "8888:8888"
     networks:
       - agent_poc_network
   ingestion_server:
