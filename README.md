@@ -1,3 +1,6 @@
+# docker compose setup on Ubuntu
+https://linuxopsys.com/getting-started-with-podman-compose
+
 # To dev gui
 cd agent_poc
 npm run dev

@@ -2,13 +2,10 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"net/http"
-	"strings"
 
-	ui "github.com/ttrnecka/agent_poc/agent_poc"
-	"github.com/ttrnecka/agent_poc/api"
-	"github.com/ttrnecka/agent_poc/ws"
+	"github.com/ttrnecka/agent_poc/webapi/api"
+	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
 func main() {
@@ -38,16 +35,7 @@ func router() http.Handler {
 	// index page
 	mux.HandleFunc("/", indexHandler)
 
-	// static files
-	staticFS, _ := fs.Sub(ui.StaticFiles, "dist")
-	httpFS := http.FileServer(http.FS(staticFS))
-	mux.Handle("/assets/", httpFS)
-
 	// api
-	mux.HandleFunc("/api/v1/greeting", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, there!"))
-	})
-
 	mux.HandleFunc("/api/v1/policy", commonApiMiddleware(api.PolicyApiHandler))
 	mux.HandleFunc("/api/v1/policy/", commonApiMiddleware(api.PolicyItemApiHandler))
 	mux.HandleFunc("/api/v1/probe", commonApiMiddleware(api.ProbeApiHandler))
@@ -62,23 +50,12 @@ func router() http.Handler {
 	return mux
 }
 
+// no index
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		fmt.Fprintln(w, http.StatusText(http.StatusMethodNotAllowed))
 		return
 	}
-
-	if strings.HasPrefix(r.URL.Path, "/api") {
-		http.NotFound(w, r)
-		return
-	}
-
-	if r.URL.Path == "/favicon.ico" {
-		rawFile, _ := ui.StaticFiles.ReadFile("dist/favicon.ico")
-		w.Write(rawFile)
-		return
-	}
-	rawFile, _ := ui.StaticFiles.ReadFile("dist/index.html")
-	w.Write(rawFile)
+	http.NotFound(w, r)
 }

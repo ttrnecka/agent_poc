@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
-	"github.com/ttrnecka/agent_poc/ws"
+	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
 type Probe struct {

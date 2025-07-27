@@ -16,4 +16,4 @@ app.use(router)
 
 app.mount('#app')
 
-import "bootstrap/dist/js/bootstrap.js";
+import "bootstrap";

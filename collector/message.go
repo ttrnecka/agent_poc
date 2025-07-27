@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
-	"github.com/ttrnecka/agent_poc/ws"
+	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
 type Message struct {

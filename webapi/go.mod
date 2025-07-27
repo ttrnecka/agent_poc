@@ -1,4 +1,4 @@
-module github.com/ttrnecka/agent_poc
+module github.com/ttrnecka/agent_poc/webapi
 
 go 1.23.0
 

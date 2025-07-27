@@ -2,28 +2,29 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: Dockerfile_nginx
+      dockerfile: ./nginx/Dockerfile
     image: poc_nginx:0.0.1
     ports:
       - "80:80"
     networks:
       - agent_poc_network
     depends_on:
-      - web
-  web:
+      - webapi
+  webapi:
     build:
       context: .
-      dockerfile: Dockerfile_web
+      dockerfile: ./webapi/Dockerfile
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
-    image: poc_web:0.0.1
+    image: poc_webapi:0.0.1
     ports:
       - "8888:8888"
     networks:
       - agent_poc_network
-  ingestion_server:
+  ingest_service:
     build:
-      context: ./ingestion_server
+      context: .
+      dockerfile: ./ingestion/Dockerfile
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_ings:0.0.1
@@ -36,26 +37,28 @@ services:
     command: ["-upload-dir=/data"]
   collector1:
     build:
-      context: ./collector
+      context: . 
+      dockerfile: ./collector/Dockerfile
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_collector:0.0.1
     networks:
       - agent_poc_network
-    command: ["--addr", "web:8888", "--source", "collector1"]
+    command: ["--addr", "webapi:8888", "--source", "collector1"]
     depends_on:
-      - web
+      - webapi
   collector2:
     build:
-      context: ./collector
+      context: . 
+      dockerfile: ./collector/Dockerfile
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_collector:0.0.1
     networks:
       - agent_poc_network
-    command: ["--addr", "web:8888", "--source", "collector2"]
+    command: ["--addr", "webapi:8888", "--source", "collector2"]
     depends_on:
-      - web
+      - webapi
   switch1:
     image: trnecka/mock_server:latest
     networks:

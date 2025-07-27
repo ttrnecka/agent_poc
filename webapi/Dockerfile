@@ -1,7 +1,7 @@
 FROM golang:1.23-alpine AS build
 ARG IMPORT_ZSCALER_CERT=false
 
-COPY zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
+COPY zscaler/zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
 
 ENV CGO_ENABLED=0
 
@@ -16,13 +16,9 @@ RUN apk update && apk add bash ca-certificates dos2unix && update-ca-certificate
 
 WORKDIR /app
 
-COPY . .
-# COPY --from=npm /app/dist /app/agent_poc/dist
-RUN mkdir -p /app/agent_poc/dist
-RUN echo "" > /app/agent_poc/dist/index.html
-
+COPY webapi/ .
 RUN go mod download
-RUN go build -o /agent_poc
+RUN go build -o /webapi
 
 WORKDIR /app/policies/brocade
 
@@ -36,8 +32,8 @@ RUN bash ./build.sh 1.0.3
 # final stage
 FROM alpine 
 WORKDIR /
-COPY --from=build /agent_poc /agent_poc
+COPY --from=build /webapi /webapi
 COPY --from=build /app/data /data
 COPY --from=build /app/policies/brocade/ /data/policies
 EXPOSE 8888
-ENTRYPOINT ["/agent_poc"]
+ENTRYPOINT ["/webapi"]

@@ -2,7 +2,7 @@
 FROM node:20-alpine AS npm
 ARG IMPORT_ZSCALER_CERT=false
 
-COPY zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
+COPY zscaler/zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
 
 RUN if [ "$IMPORT_ZSCALER_CERT" = "true" ]; then \
       cp /tmp/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt && \
@@ -12,9 +12,9 @@ RUN if [ "$IMPORT_ZSCALER_CERT" = "true" ]; then \
     fi
 
 WORKDIR /app
-COPY agent_poc/package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci  --force --loglevel verbose
-COPY agent_poc/ .
+COPY frontend/ .
 RUN npm run build
 
 FROM nginx:alpine

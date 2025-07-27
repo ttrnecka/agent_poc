@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/ttrnecka/agent_poc/api"
+	"github.com/ttrnecka/agent_poc/webapi/api"
 )
 
 var refreshMU sync.Mutex

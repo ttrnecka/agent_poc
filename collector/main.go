@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/ttrnecka/agent_poc/ws"
+	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
