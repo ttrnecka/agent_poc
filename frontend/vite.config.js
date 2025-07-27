@@ -7,6 +7,13 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [
     vue(),
+    {
+      name: 'inject-build-date',
+      transformIndexHtml(html) {
+        const buildDate = new Date().toISOString();
+        return html.replace('__BUILD_DATE__', buildDate);
+      }
+    }
   ],
   // base: '/agent_poc/',
   resolve: {
