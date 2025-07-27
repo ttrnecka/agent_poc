@@ -65,7 +65,6 @@ func Execute(cmd *Cmd) {
 	go func() {
 		defer close(done)
 		if err := rootCmd.Execute(); err != nil {
-			log.Println("FINISHED EXECUTING")
 			if ec, ok := err.(*ExitCodeError); ok {
 				os.Exit(ec.Code)
 			} else {
@@ -76,7 +75,6 @@ func Execute(cmd *Cmd) {
 }
 
 func Wait() {
-	log.Println("WAITING")
 	<-done
 }
 

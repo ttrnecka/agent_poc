@@ -12,14 +12,13 @@ RUN if [ "$IMPORT_ZSCALER_CERT" = "true" ]; then \
 
 WORKDIR /app
 
+COPY go.work* .
 COPY collector collector
+COPY ingestion ingestion
 COPY webapi webapi
 
-WORKDIR /app/collector
-
 RUN go mod download
-
-RUN go build -o /collector
+RUN go build -o /collector ./collector
 
 # final stage
 FROM alpine

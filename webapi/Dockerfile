@@ -16,11 +16,14 @@ RUN apk update && apk add bash ca-certificates dos2unix && update-ca-certificate
 
 WORKDIR /app
 
-COPY webapi/ .
+COPY go.work* .
+COPY collector collector
+COPY ingestion ingestion
+COPY webapi webapi
 RUN go mod download
-RUN go build -o /webapi
+RUN go build -o /webapi ./webapi
 
-WORKDIR /app/policies/brocade
+WORKDIR /app/webapi/policies/brocade
 
 RUN chmod +x build.sh
 RUN dos2unix ./build.sh
@@ -33,7 +36,7 @@ RUN bash ./build.sh 1.0.3
 FROM alpine 
 WORKDIR /
 COPY --from=build /webapi /webapi
-COPY --from=build /app/data /data
-COPY --from=build /app/policies/brocade/ /data/policies
+COPY --from=build /app/webapi/data /data
+COPY --from=build /app/webapi/policies/brocade/ /data/policies
 EXPOSE 8888
 ENTRYPOINT ["/webapi"]
