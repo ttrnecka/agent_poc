@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"fmt"
@@ -12,34 +12,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/ssh"
 )
-
-type exitCodeError struct {
-	Code int
-	Err  error
-}
-
-func (e *exitCodeError) Error() string {
-	return e.Err.Error()
-}
-
-func (e *exitCodeError) Unwrap() error {
-	return e.Err
-}
-
-func connectToHost() (*ssh.Client, error) {
-	sshConfig := &ssh.ClientConfig{
-		User: viper.GetString("user"),
-		Auth: []ssh.AuthMethod{ssh.Password(viper.GetString("password"))},
-	}
-	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
-
-	client, err := ssh.Dial("tcp", viper.GetString("endpoint"), sshConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return client, nil
-}
 
 // =================================================================================
 // Function: RunCommand
@@ -73,7 +45,7 @@ func checkFolder(folder string) error {
 }
 
 // TODO if this collector is enhanced so it pulls from more that just that on switch, the endpoint needs to be properly pointin to corect device
-func genearateFilename(command string) string {
+func generateFilename(command string) string {
 	return fmt.Sprintf("%d_%s_%s.txt", time.Now().UnixMicro(), strings.SplitN(viper.GetString("endpoint"), ":", 2)[0], sanitizeCommand(command))
 }
 

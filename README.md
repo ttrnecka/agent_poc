@@ -1,51 +1,43 @@
-# docker compose setup on Ubuntu
+# Podman compose setup on Ubuntu
 https://linuxopsys.com/getting-started-with-podman-compose
 
-# To dev gui
-cd agent_poc
+# To dev GUI
+
+## Start Vite
+cd frontend
 npm run dev
-cd ..
+
+## Start webapi
+cd webapi
 go run .
 
 # To build npm locally 
-
 npm run build
 
 # Zscaller
 Use 
-set IMPORT_ZSCALER_CERT=true
-before starting the docker compose up
-# To deploy gui + backend
 
-docker build -t agent_poc:test . 
+```set IMPORT_ZSCALER_CERT=true```
+
+before starting the docker compose up
+
+# To deploy GUI + backend
+
+docker compose build --no-cache nginx webapi 
 
 docker image prune -f
 
-docker network create poc
-docker run --rm --name server --network poc -p "8888:8888" agent_poc:test
+docker compose up -d nginx webapi
 
 # To dev collector
 cd collector
 go run . 
 go run . --source collector1|collector2
 
-# To build collector
+# Collector deploy
 
-## local docker based build
-cd collector
-
-DOCKER_BUILDKIT=1 docker build --output type=local,dest=./out .
-
-Run export DOCKER_BUILDKIT=1
-
-Run docker build --target bin --output bin/ .
-
-
-## docker image build and run on the same nw as server
-docker build -t collector:test .
+docker compose build --no-cache collector1
 
 docker image prune -f
 
-docker run --rm --network poc collector:test --addr server:8888
-
-docker run --rm --network poc collector:test --addr server:8888 --source collector2
+docker compose up -d collector1 collector2
