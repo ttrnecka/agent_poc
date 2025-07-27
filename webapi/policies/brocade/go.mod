@@ -1,12 +1,8 @@
-module github.com/ttrnecka/agent_poc/policies/brocade
+module github.com/ttrnecka/agent_poc/webapi/policies/brocade
 
-go 1.23.0
+go 1.23.11
 
 toolchain go1.24.5
-
-require github.com/ttrnecka/agent_poc/webapi/policies/core v0.0.0
-
-replace github.com/ttrnecka/agent_poc/webapi/policies/core => ../core
 
 require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect

@@ -1,0 +1,9 @@
+go 1.23.11
+
+use (
+	./collector
+	./ingestion
+	./webapi
+	./webapi/policies/brocade
+	./webapi/policies/core
+)

@@ -1,6 +1,6 @@
-module github.com/ttrnecka/agent_poc/policies/core
+module github.com/ttrnecka/agent_poc/webapi/policies/core
 
-go 1.23.0
+go 1.23.11
 
 require (
 	github.com/spf13/cobra v1.9.1
