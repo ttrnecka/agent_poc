@@ -44,7 +44,7 @@ services:
     image: poc_collector:0.0.1
     networks:
       - agent_poc_network
-    command: ["--addr", "webapi:8888", "--source", "collector1"]
+    command: ["--addr", "webapi:8888", "--source", "collector1","--ingest","ingest_service:8888"]
     depends_on:
       - webapi
   collector2:
@@ -56,7 +56,7 @@ services:
     image: poc_collector:0.0.1
     networks:
       - agent_poc_network
-    command: ["--addr", "webapi:8888", "--source", "collector2"]
+    command: ["--addr", "webapi:8888", "--source", "collector2","--ingest","ingest_service:8888"]
     depends_on:
       - webapi
   switch1:

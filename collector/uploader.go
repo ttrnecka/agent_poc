@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -68,12 +69,22 @@ func (q *UploadQueue) uploadWithRetries(filePath string, retries int) {
 	for attempt := 1; attempt <= retries; attempt++ {
 		err := uploadFile(filePath)
 		if err == nil {
+			deleteFile(filePath)
 			return
 		}
 		fmt.Printf("Retry %d for %s: %v\n", attempt, filePath, err)
 		time.Sleep(time.Duration(attempt) * time.Second)
 	}
 	fmt.Println("Failed to upload after retries:", filePath)
+}
+
+func deleteFile(path string) {
+	log.Printf("Deleting file: %s", path)
+	err := os.Remove(path)
+	if err != nil {
+		log.Printf("Error deleting file: %v", err)
+		return
+	}
 }
 
 func uploadFile(path string) error {

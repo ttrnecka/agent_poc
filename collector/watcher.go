@@ -1,88 +1,79 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
-
-	"github.com/fsnotify/fsnotify"
 )
 
-type RecursiveWatcher struct {
-	watcher     *fsnotify.Watcher
-	watchRoot   string
-	queue       *UploadQueue
-	debounceMap map[string]time.Time
-	mutex       sync.Mutex
-	done        chan struct{}
+type Watcher struct {
+	watchRoot string
+	queue     *UploadQueue
+	process   chan struct{}
+	done      chan struct{}
+	mu        sync.Mutex
 }
 
-func NewRecursiveWatcher(path string, queue *UploadQueue) *RecursiveWatcher {
-	w, _ := fsnotify.NewWatcher()
-	return &RecursiveWatcher{
-		watcher:     w,
-		watchRoot:   path,
-		queue:       queue,
-		debounceMap: make(map[string]time.Time),
-		done:        make(chan struct{}),
+func NewWatcher(path string, queue *UploadQueue) *Watcher {
+	return &Watcher{
+		watchRoot: path,
+		queue:     queue,
+		process:   make(chan struct{}),
+		done:      make(chan struct{}),
 	}
 }
 
-func (rw *RecursiveWatcher) Start() {
-	_ = filepath.WalkDir(rw.watchRoot, func(path string, d os.DirEntry, err error) error {
-		if d.IsDir() {
-			_ = rw.watcher.Add(path)
-		}
-		return nil
-	})
-
+func (rw *Watcher) Start() {
 	go rw.eventLoop()
 }
 
-func (rw *RecursiveWatcher) Stop() {
+func (rw *Watcher) Stop() {
 	close(rw.done)
-	rw.watcher.Close()
 }
 
-func (rw *RecursiveWatcher) eventLoop() {
+func (rw *Watcher) Process() {
+	rw.process <- struct{}{}
+}
+
+func (rw *Watcher) eventLoop() {
+
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
 	for {
 		select {
-		case event := <-rw.watcher.Events:
-			if event.Op&fsnotify.Create == fsnotify.Create {
-				rw.handleCreateEvent(event.Name)
-			}
-		case err := <-rw.watcher.Errors:
-			fmt.Println("Watcher error:", err)
+		case <-rw.process:
+			log.Printf("Adhoc queue processing")
+			rw.walkAndEnqueue()
+		case <-ticker.C:
+			log.Printf("Scheduled queue processing")
+			rw.walkAndEnqueue()
 		case <-rw.done:
 			return
 		}
 	}
 }
 
-func (rw *RecursiveWatcher) handleCreateEvent(path string) {
-	info, err := os.Stat(path)
+func (rw *Watcher) walkAndEnqueue() {
+	// Read all entries in the source directory
+	// only run it one at a time
+	rw.mu.Lock()
+	defer rw.mu.Unlock()
+
+	entries, err := os.ReadDir(rw.watchRoot)
 	if err != nil {
-		return
+		log.Printf("Error accessing path %q: %v\n", rw.watchRoot, err)
 	}
 
-	if info.IsDir() {
-		_ = rw.watcher.Add(path)
-	} else {
-		rw.mutex.Lock()
-		lastSeen := rw.debounceMap[path]
-		if time.Since(lastSeen) < 2*time.Second {
-			rw.mutex.Unlock()
-			return
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Skip directories
+			continue
 		}
-		rw.debounceMap[path] = time.Now()
-		rw.mutex.Unlock()
 
-		go func() {
-			// Wait a bit to ensure file is fully written
-			time.Sleep(2 * time.Second)
-			rw.queue.Enqueue(path)
-		}()
+		srcPath := filepath.Join(rw.watchRoot, entry.Name())
+		rw.queue.Enqueue((srcPath))
+
 	}
 }

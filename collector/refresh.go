@@ -14,31 +14,32 @@ import (
 	"github.com/ttrnecka/agent_poc/webapi/api"
 )
 
+// functions handling refresh process
+
 var refreshMU sync.Mutex
 
 // make refresh blocking and not refresh mutliple times in paraller
 func refresh() error {
 	refreshMU.Lock()
 	defer refreshMU.Unlock()
+
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
+	log.Println("Refreshing probes")
 	res, err := http.Get(requestURL)
 	if err != nil {
+		log.Print(fmt.Errorf("probe refresh: %w", err))
 		return err
 	}
 	defer res.Body.Close()
 
 	var probes []api.Probe
-	// bodyBytes, err := io.ReadAll(res.Body)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// bodyString := string(bodyBytes)
-	// fmt.Println(bodyString)
 	err = json.NewDecoder(res.Body).Decode(&probes)
 	if err != nil {
+		log.Print(fmt.Errorf("probe body: %w", err))
 		return err
 	}
 
+	// process probes and make a list of policies that needs downloading
 	policies := make(map[string][]string)
 	for _, probe := range probes {
 		if probe.Collector == *source {
@@ -58,9 +59,9 @@ func refresh() error {
 			}
 		}
 	}
-	// fmt.Printf("%v\n", policies)
 
-	// download
+	// download policies
+	// TODO: compare policies with existing policies and delete those no longer needed
 	for name, versions := range policies {
 		for _, version := range versions {
 			file_name := fmt.Sprintf("bin/%s_%s", name, version)
@@ -109,6 +110,7 @@ func downloadFile(filepath string, url string) error {
 }
 
 func makeExecutable(filePath string) error {
+	log.Printf("Setting execute permissions on: %s", filePath)
 	switch runtime.GOOS {
 	case "linux", "darwin":
 		// Use chmod to set executable bit (755)

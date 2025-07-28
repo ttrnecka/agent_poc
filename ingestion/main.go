@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 var uploadDir string
@@ -30,6 +29,7 @@ func main() {
 		Handler: router(),
 	}
 
+	log.Println("Starting ingestion service")
 	err = srv.ListenAndServe()
 	if err != nil {
 		fmt.Println(err)
@@ -67,7 +67,8 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outPath := filepath.Join(uploadDir, fmt.Sprintf("%d-%s", time.Now().UnixNano(), safeName))
+	outPath := filepath.Join(uploadDir, safeName)
+	log.Printf("Creating file %s", outPath)
 	outFile, err := os.Create(outPath)
 	if err != nil {
 		log.Printf("Failed to create file: %v", err)

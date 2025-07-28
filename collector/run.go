@@ -14,32 +14,16 @@ import (
 	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
-func parseEnvAssignments(input string) ([]string, []string) {
-	tokens, err := shlex.Split(input)
+// functions handling run process
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var envVars []string
-	var rest []string
-
-	for i, token := range tokens {
-		if strings.Contains(token, "=") && !strings.HasPrefix(token, "=") {
-			envVars = append(envVars, token)
-		} else {
-			rest = tokens[i:]
-			break
-		}
-	}
-	return envVars, rest
+type CommandResult struct {
+	Output []byte
+	Code   int
+	Err    error
 }
 
 func run(mes ws.Message, wsConn *websocket.Conn) {
-	// This function should implement the logic to run the policy
-	// specified in the message. For now, we will just log the action.
 	log.Printf("Running policy for source %s with message: %s", mes.Source, mes.Text)
-	// Here you would typically call the function that executes the policy.
 
 	envs, parts := parseEnvAssignments(mes.Text)
 
@@ -47,13 +31,22 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("Created temporary upload folder: %s", output_folder)
 
+	// the rest of the process saves the files to output_folder
+	// at the and process the folder and delete the folder
 	defer func() {
 		processFolder(output_folder, *watchPath, *source, parts[0])
-		os.RemoveAll(output_folder)
+		log.Println("Deleting temproary upload folder")
+		err := os.RemoveAll(output_folder)
+		if err != nil {
+			log.Println(fmt.Errorf("cannot delete %s: %w", output_folder, err))
+		}
+		log.Printf("Deleted temporary upload folder: %s", output_folder)
 	}()
 
 	parts = append(parts, "--output_folder", output_folder)
+	// TODO: obfuscate credentials env variables
 	log.Printf("Parsed environment variables: %v", envs)
 	log.Printf("Parsed command parts: %v", parts)
 	cmd := exec.Command(fmt.Sprintf("./bin/%s", parts[0]), parts[1:]...)
@@ -62,16 +55,12 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	ticker := time.NewTicker(2000 * time.Millisecond)
 	defer ticker.Stop()
 
-	type CommandResult struct {
-		Output []byte
-		Code   int
-		Err    error
-	}
-
 	result := make(chan CommandResult)
 
+	// execute the command in goroutine and pass results to result channel
 	go func() {
 		cr := CommandResult{}
+		log.Printf("Running plugin %s", parts[0])
 		output, err := cmd.CombinedOutput()
 
 		cr.Output = output
@@ -85,8 +74,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 			if exitErr, ok := err.(*exec.ExitError); ok {
 				cr.Code = exitErr.ExitCode()
 			} else {
-				// If it's another kind of error (e.g., command not found), just print it
-				log.Printf("Command execution failed: %v\n", err)
+				// If it's another kind of error (e.g., command not found), just set dummy non-0 code
 				cr.Code = 255
 			}
 		}
@@ -105,6 +93,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 				mc = ws.MSG_FINISHED_ERR
 			}
 			m := ws.NewMessage(mc, *source, mes.Source, text)
+			log.Printf("Sending FINISHED message: %v", m)
 			m.Session = mes.Session
 			mu.Lock()
 			err := wsConn.WriteJSON(m)
@@ -128,6 +117,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, sb.String())
 			m.Session = mes.Session
 			mu.Lock()
+			log.Printf("Sending DATA message: %v", m)
 			err = wsConn.WriteJSON(m)
 			mu.Unlock()
 			if err != nil {
@@ -138,9 +128,11 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 
 			return
 		case <-ticker.C:
+			// TODO this will just send a message, it would be nice if we can stream here the logs
 			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
 			m.Session = mes.Session
 			mu.Lock()
+			log.Printf("Sending RUNNING message: %v", m)
 			err := wsConn.WriteJSON(m)
 			mu.Unlock()
 			if err != nil {
@@ -152,12 +144,34 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	}
 }
 
+func parseEnvAssignments(input string) ([]string, []string) {
+	tokens, err := shlex.Split(input)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var envVars []string
+	var rest []string
+
+	for i, token := range tokens {
+		if strings.Contains(token, "=") && !strings.HasPrefix(token, "=") {
+			envVars = append(envVars, token)
+		} else {
+			rest = tokens[i:]
+			break
+		}
+	}
+	return envVars, rest
+}
+
 func processFolder(src_folder, dest_folder, collector, probe string) {
 
+	log.Printf("Reading source folder %s", src_folder)
 	// Read all entries in the source directory
 	entries, err := os.ReadDir(src_folder)
 	if err != nil {
-		log.Println(fmt.Errorf("failed to read source directory: %w", err))
+		log.Println(fmt.Errorf("failed to read source folder: %w", err))
 	}
 
 	for _, entry := range entries {
@@ -165,11 +179,11 @@ func processFolder(src_folder, dest_folder, collector, probe string) {
 			// Skip subdirectories (you can recurse if needed)
 			continue
 		}
-
 		srcPath := filepath.Join(src_folder, entry.Name())
 		destPath := filepath.Join(dest_folder, entry.Name())
 
 		timestamp, device, endpoint, err := parseFilename(entry.Name())
+		log.Printf("Processing file: %s", srcPath)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
@@ -194,6 +208,7 @@ func processFolder(src_folder, dest_folder, collector, probe string) {
 		if err != nil {
 			log.Println(fmt.Errorf("failed to write file %s: %w", destPath, err))
 		}
+		log.Printf("New file written: %s", destPath)
 	}
 }
 
