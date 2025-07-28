@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/shlex"
-	"github.com/gorilla/websocket"
+	"github.com/google/uuid"
 	"github.com/ttrnecka/agent_poc/webapi/ws"
 )
 
@@ -22,10 +22,10 @@ type CommandResult struct {
 	Err    error
 }
 
-func run(mes ws.Message, wsConn *websocket.Conn) {
+func run(mes ws.Message, mh *MessageHandler) {
 	log.Printf("Running policy for source %s with message: %s", mes.Source, mes.Text)
 
-	envs, parts := parseEnvAssignments(mes.Text)
+	envs, parts, probeId := parseEnvAssignments(mes.Text)
 
 	output_folder, err := os.MkdirTemp(*tmpPath, parts[0])
 	if err != nil {
@@ -36,7 +36,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	// the rest of the process saves the files to output_folder
 	// at the and process the folder and delete the folder
 	defer func() {
-		processFolder(output_folder, *watchPath, *source, parts[0])
+		processFolder(output_folder, *watchPath, *source, parts[0], probeId)
 		log.Println("Deleting temproary upload folder")
 		err := os.RemoveAll(output_folder)
 		if err != nil {
@@ -86,6 +86,7 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 	for {
 		select {
 		case cr := <-result:
+			// TODO: return out of this branch needs to handle local message persistence in cas we need to resend it
 			text := "Request succeeded"
 			mc := ws.MSG_FINISHED_OK
 			if cr.Code != 0 {
@@ -93,17 +94,18 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 				mc = ws.MSG_FINISHED_ERR
 			}
 			m := ws.NewMessage(mc, *source, mes.Source, text)
-			log.Printf("Sending FINISHED message: %v", m)
 			m.Session = mes.Session
-			mu.Lock()
-			err := wsConn.WriteJSON(m)
-			mu.Unlock()
+
+			log.Printf("Sending FINISHED message: %v", m)
+			err := mh.SendMessage(m)
 			if err != nil {
-				log.Printf("Sending FINISHED message failed: %v\n", err)
 				return
 			}
-			log.Printf("Sending FINISHED message suceeded: %v\n", err)
+
+			// processing simulator
 			time.Sleep(2000 * time.Millisecond)
+
+			// prepare DATA message
 			var sb strings.Builder
 			sb.Write(cr.Output)
 			sb.WriteString("\n")
@@ -116,35 +118,29 @@ func run(mes ws.Message, wsConn *websocket.Conn) {
 			// sb.WriteString(fmt.Sprintf("Exit Code: %d", cr.Code))
 			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, sb.String())
 			m.Session = mes.Session
-			mu.Lock()
+
 			log.Printf("Sending DATA message: %v", m)
-			err = wsConn.WriteJSON(m)
-			mu.Unlock()
+			err = mh.SendMessage(m)
 			if err != nil {
-				log.Printf("Sending DATA message failed: %v\n", err)
 				return
 			}
-			log.Printf("Sending DATA message suceeded: %v\n", err)
 
 			return
 		case <-ticker.C:
 			// TODO this will just send a message, it would be nice if we can stream here the logs
 			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
 			m.Session = mes.Session
-			mu.Lock()
+
 			log.Printf("Sending RUNNING message: %v", m)
-			err := wsConn.WriteJSON(m)
-			mu.Unlock()
+			err = mh.SendMessage(m)
 			if err != nil {
-				log.Printf("Sending RUNNING message failed: %v\n", err)
 				return
 			}
-			log.Printf("Sending RUNNING message suceeded: %v\n", err)
 		}
 	}
 }
 
-func parseEnvAssignments(input string) ([]string, []string) {
+func parseEnvAssignments(input string) ([]string, []string, string) {
 	tokens, err := shlex.Split(input)
 
 	if err != nil {
@@ -153,19 +149,26 @@ func parseEnvAssignments(input string) ([]string, []string) {
 
 	var envVars []string
 	var rest []string
+	var probeId string
 
 	for i, token := range tokens {
 		if strings.Contains(token, "=") && !strings.HasPrefix(token, "=") {
-			envVars = append(envVars, token)
+			// hack to get probe id while the stuff is in POC
+			if strings.Contains(token, "PROBE_ID") {
+				parts := strings.SplitN(token, "=", 2)
+				probeId = parts[1]
+			} else {
+				envVars = append(envVars, token)
+			}
 		} else {
 			rest = tokens[i:]
 			break
 		}
 	}
-	return envVars, rest
+	return envVars, rest, probeId
 }
 
-func processFolder(src_folder, dest_folder, collector, probe string) {
+func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 
 	log.Printf("Reading source folder %s", src_folder)
 	// Read all entries in the source directory
@@ -173,7 +176,7 @@ func processFolder(src_folder, dest_folder, collector, probe string) {
 	if err != nil {
 		log.Println(fmt.Errorf("failed to read source folder: %w", err))
 	}
-
+	uUID := uuid.New().String()
 	for _, entry := range entries {
 		if entry.IsDir() {
 			// Skip subdirectories (you can recurse if needed)
@@ -196,12 +199,15 @@ func processFolder(src_folder, dest_folder, collector, probe string) {
 		}
 
 		// Prepend namePrefix
-		modifiedContent := []byte("---collector:\t" + collector + "\n" +
-			"---probe:\t" + probe + "\n" +
-			"---timestamp:\t" + timestamp + "\n" +
-			"---device:\t" + stripAfterLast(device, ":") + "\n" +
-			"---endpoint:\t" + stripAfterLast(endpoint, ".") + "\n" +
-			string(content))
+		modifiedContent := []byte(
+			"---collector:\t" + collector + "\n" +
+				"---probe_id:\t" + probeId + "\n" +
+				"---collection_id:\t" + uUID + "\n" +
+				"---policy:\t" + policy + "\n" +
+				"---timestamp:\t" + timestamp + "\n" +
+				"---device:\t" + stripAfterLast(device, ":") + "\n" +
+				"---endpoint:\t" + stripAfterLast(endpoint, ".") + "\n" +
+				string(content))
 
 		// Write modified content to destination
 		err = os.WriteFile(destPath, modifiedContent, 0644)

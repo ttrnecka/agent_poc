@@ -40,6 +40,8 @@ func router() http.Handler {
 	mux.HandleFunc("/api/v1/policy/", commonApiMiddleware(api.PolicyItemApiHandler))
 	mux.HandleFunc("/api/v1/probe", commonApiMiddleware(api.ProbeApiHandler))
 	mux.HandleFunc("/api/v1/collector", commonApiMiddleware(api.CollectorApiHandler))
+	mux.HandleFunc("/api/v1/data/collector/", commonApiMiddleware(api.DataHandler))
+	mux.HandleFunc("/api/v1/data/collector", commonApiMiddleware(api.DataHandler)) // handles no trailing slash too
 
 	hub := ws.GetHub()
 	go hub.Run()

@@ -27,6 +27,7 @@ onMounted(() => {
         <nav>
           <RouterLink to="/">Configuration</RouterLink>
           <RouterLink to="/collectors">Collector</RouterLink>
+          <RouterLink to="/inventory">Inventory</RouterLink>
         </nav>
       </div>
     </header>

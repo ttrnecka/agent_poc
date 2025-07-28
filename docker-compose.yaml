@@ -21,6 +21,8 @@ services:
       - "8888:8888"
     networks:
       - agent_poc_network
+    volumes:
+      - ./db:/data/db
   ingest_service:
     build:
       context: .
@@ -34,6 +36,7 @@ services:
       - agent_poc_network
     volumes:
       - ./uploads:/data
+      - ./db:/data/db
     command: ["-upload-dir=/data"]
   collector1:
     build:

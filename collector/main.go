@@ -29,7 +29,6 @@ func main() {
 		log.Println(fmt.Errorf("failed to create directory: %w", err))
 	}
 
-	done := make(chan struct{})
 	interrupt := make(chan os.Signal, 1)
 
 	//sends notifications on interrupt signals
@@ -40,7 +39,7 @@ func main() {
 	uploadQueue := NewUploadQueue(10) // 10 workers
 	watcher := NewWatcher(*watchPath, uploadQueue)
 
-	messageHandler := NewMessageHandler(*addr, done, watcher)
+	messageHandler := NewMessageHandler(*addr, *source, watcher)
 	go messageHandler.Start()
 
 	// run the initial refresh in nonblocking fashion
@@ -55,18 +54,19 @@ func main() {
 
 	// close when done, sends HB message and handles interrups gracefully
 	// eventLoop(c, ticker, done, interrupt, uploadQueue, watcher)
-	eventLoop(done, interrupt, uploadQueue, watcher, messageHandler)
+	eventLoop(interrupt, uploadQueue, watcher, messageHandler)
 }
 
 // func eventLoop(c *websocket.Conn, ticker *time.Ticker, done chan struct{}, interrupt chan os.Signal) {
-func eventLoop(done chan struct{}, interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watcher, mh *MessageHandler) {
+func eventLoop(interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watcher, mh *MessageHandler) {
 	for {
 		select {
-		case <-done:
-			// TODO: this part needs to change as not to close when the channel is closed as done is only closed when readhandler fails
+		case <-mh.done:
+			// TODO: this part needs to change as not to close when the channel is closed as mh.done is only closed when mh.readhandler fails
 			// attempt to reconnect should be made
 			return
 		case <-interrupt:
+			log.Println("Received interupt signal")
 			mh.Stop()
 			watcher.Stop()
 			uploadQueue.Stop()

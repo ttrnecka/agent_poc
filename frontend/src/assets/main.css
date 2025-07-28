@@ -33,3 +33,23 @@ a,
     padding: 0 2rem;
   }
 } */
+
+.accordion-button {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.accordion-body {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.accordion-item {
+  margin-bottom: 0.25rem;
+  border-radius: 4px;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #f8f9fa;
+}

@@ -84,6 +84,8 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go Pipeline{}.Process(outPath)
+
 	log.Printf("Received file: %s -> %s", fileName, outPath)
 	w.WriteHeader(http.StatusOK)
 }
