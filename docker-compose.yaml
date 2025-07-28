@@ -5,11 +5,22 @@ services:
       dockerfile: ./nginx/Dockerfile
     image: poc_nginx:0.0.1
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
     networks:
       - agent_poc_network
     depends_on:
       - webapi
+    restart: always
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:ro
+      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
   webapi:
     build:
       context: .
