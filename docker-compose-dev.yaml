@@ -1,0 +1,83 @@
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
+    image: poc_nginx:0.0.1
+    ports:
+      - 80:80
+    networks:
+      - agent_poc_network
+    depends_on:
+      - webapi
+    restart: always
+    volumes:
+      - ./nginx/conf_dev/:/etc/nginx/conf.d/:ro
+  webapi:
+    build:
+      context: .
+      dockerfile: ./webapi/Dockerfile
+      args:
+        IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_webapi:0.0.1
+    ports:
+      - "8888:8888"
+    networks:
+      - agent_poc_network
+    volumes:
+      - ./db:/data/db
+  ingest_service:
+    build:
+      context: .
+      dockerfile: ./ingestion/Dockerfile
+      args:
+        IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_ings:0.0.1
+    ports:
+      - "8889:8888"
+    networks:
+      - agent_poc_network
+    volumes:
+      - ./uploads:/data
+      - ./db:/data/db
+    command: ["-upload-dir=/data"]
+  collector1:
+    build:
+      context: . 
+      dockerfile: ./collector/Dockerfile
+      args:
+        IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_collector:0.0.1
+    networks:
+      - agent_poc_network
+    command: ["--addr", "webapi:8888", "--source", "collector1","--ingest","ingest_service:8888"]
+    depends_on:
+      - webapi
+  collector2:
+    build:
+      context: . 
+      dockerfile: ./collector/Dockerfile
+      args:
+        IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
+    image: poc_collector:0.0.1
+    networks:
+      - agent_poc_network
+    command: ["--addr", "webapi:8888", "--source", "collector2","--ingest","ingest_service:8888"]
+    depends_on:
+      - webapi
+  switch1:
+    image: trnecka/mock_server:latest
+    networks:
+      - agent_poc_network
+    command: ["run","-m", "brocade_switch","-p", "2222"]
+    ports:
+      - "2222:2222"
+  switch2:
+    image: trnecka/mock_server:latest
+    networks:
+      - agent_poc_network
+    command: ["run","-m", "brocade_switch_9","-p", "2222"]
+    ports:
+      - "2223:2222"
+networks:
+  agent_poc_network: {}
