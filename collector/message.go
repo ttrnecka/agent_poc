@@ -27,7 +27,7 @@ type MessageHandler struct {
 }
 
 func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
-	return &MessageHandler{
+	h := &MessageHandler{
 		addr:     addr,
 		id:       id,
 		done:     make(chan struct{}),
@@ -35,26 +35,55 @@ func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
 		watcher:  watcher,
 		ticker:   time.NewTicker(5 * time.Second),
 	}
+
+	// // Debug: watch for when h is GC'd
+	// runtime.SetFinalizer(h, func(m *MessageHandler) {
+	// 	log.Println("MessageHandler finalized (GC collected)")
+	// })
+	return h
 }
 
-// run it in goroutine else it will block
+// Start() opens a websocket connection and starts readLoop and processLoop in separate goroutines and returns immediately
+// If there is issue opening websocket the loops will return and close the done channel
+// Caller should wait for the done channel to be closed and then either close program or try to open new MessageHandler
+// Caller should call Stop() if they want to close the handler. There is no need to call the Stop() if the done channel was closed
+
 func (m *MessageHandler) Start() {
 	err := m.connectWebSocket()
 	if err != nil {
-		log.Fatal("dial:", err)
+		log.Printf("error opening websocket: %s", err)
 	}
-	defer m.c.Close()
 	go m.readLoop()
-	m.processLoop()
+	go m.processLoop()
 }
 
+// should only be called when wanting to intentially Stop the handler
+// if you received closed handler.done then handler is cleaned up already
+// Stop will notify about handler going offline
 func (m *MessageHandler) Stop() {
-	log.Println("Stoping MessageHandler")
 	m.closeWebSocket()
+	<-m.done
 }
 
+// closes all remaining channels and references
+// does not closes the done as that is done only in readLoop
+func (m *MessageHandler) cleanup() {
+	close(m.messages)
+	m.ticker.Stop()
+	m.watcher = nil
+	if m.c != nil {
+		m.c.Close()
+	}
+}
+
+// this loop closes when there is issue reading and closes done channel
 func (m *MessageHandler) readLoop() {
 	defer close(m.done)
+
+	// if there is no websocket connection all loops get closed
+	if m.c == nil {
+		return
+	}
 
 	for {
 		mes := ws.Message{}
@@ -69,6 +98,7 @@ func (m *MessageHandler) readLoop() {
 	}
 }
 
+// this loops closes when either done or messages are closed
 func (m *MessageHandler) processLoop() {
 	for {
 		select {
@@ -77,6 +107,10 @@ func (m *MessageHandler) processLoop() {
 			if err != nil {
 				log.Printf("Failed to send heartbeat message: %v", err)
 			}
+		case <-m.done:
+			// clean up rest of the resources
+			m.cleanup()
+			return
 		case msg, ok := <-m.messages:
 			if !ok {
 				return
@@ -99,9 +133,14 @@ func (m *MessageHandler) processLoop() {
 }
 
 func (m *MessageHandler) closeWebSocket() {
-	// Cleanly close the connection by sending a close message and then
-	// waiting (with timeout) for the server to close the connection.
-	// err := c.WriteMessage(websocket.TextMessage, []byte("OFFLINE"))
+	// send offline message and WS close message
+	// this result on server closing read pipe
+	// which in turn closes done channel in readLoop
+
+	if m.c == nil {
+		return
+	}
+
 	log.Println("Sending offline message")
 
 	err := m.SendMessage(ws.NewMessage(ws.MSG_OFFLINE, m.id, "hub", "Collector is going offline"))
@@ -118,6 +157,7 @@ func (m *MessageHandler) closeWebSocket() {
 	} else {
 		log.Println("WS close message sent")
 	}
+	// as long as this is called in the Stop only this does not make much sense
 	select {
 	case <-m.done:
 	case <-time.After(time.Second):

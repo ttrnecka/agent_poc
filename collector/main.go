@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
+	"time"
 )
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
@@ -15,8 +15,6 @@ var ingest = flag.String("ingest", "localhost:8889", "ingest service address")
 var source = flag.String("source", "collector1", "name of collector")
 var watchPath = flag.String("out", "/data/out", "core folder where collectors move files saved by plugin for sending")
 var tmpPath = flag.String("tmp", "/data/tmp", "root folder where collector instructs plugin to store data")
-
-var mu sync.Mutex
 
 func main() {
 	flag.Parse()
@@ -39,38 +37,45 @@ func main() {
 	uploadQueue := NewUploadQueue(10) // 10 workers
 	watcher := NewWatcher(*watchPath, uploadQueue)
 
-	messageHandler := NewMessageHandler(*addr, *source, watcher)
-	go messageHandler.Start()
-
 	// run the initial refresh in nonblocking fashion
 	go func() {
 		err := refresh()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}()
 
 	go watcher.Start()
 
-	// close when done, sends HB message and handles interrups gracefully
-	// eventLoop(c, ticker, done, interrupt, uploadQueue, watcher)
-	eventLoop(interrupt, uploadQueue, watcher, messageHandler)
+	reconnectDelay := 5 // seconds
+	for {
+		log.Println("Starting MessageHandler and event loop...")
+		messageHandler := NewMessageHandler(*addr, *source, watcher)
+		messageHandler.Start()
+
+		shouldExit := eventLoop(interrupt, uploadQueue, watcher, messageHandler)
+		if shouldExit {
+			log.Println("Shutting down main loop due to interrupt signal.")
+			break
+		}
+		log.Printf("WebSocket connection lost, retrying in %d seconds...", reconnectDelay)
+		time.Sleep(time.Duration(reconnectDelay) * time.Second)
+	}
 }
 
-// func eventLoop(c *websocket.Conn, ticker *time.Ticker, done chan struct{}, interrupt chan os.Signal) {
-func eventLoop(interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watcher, mh *MessageHandler) {
+// eventLoop returns true if process should exit (interrupt), false if should reconnect
+func eventLoop(interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watcher, mh *MessageHandler) bool {
 	for {
 		select {
 		case <-mh.done:
-			// TODO: this part needs to change as not to close when the channel is closed as mh.done is only closed when mh.readhandler fails
-			// attempt to reconnect should be made
-			return
+			log.Println("WebSocket connection closed or failed, will attempt to reconnect.")
+			return false // signal to reconnect
 		case <-interrupt:
-			log.Println("Received interupt signal")
+			log.Println("Received interrupt signal")
 			mh.Stop()
 			watcher.Stop()
 			uploadQueue.Stop()
-			return
+			return true // signal to exit
 		}
 	}
 }
