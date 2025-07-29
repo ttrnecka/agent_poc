@@ -12,20 +12,35 @@ import (
 type Pipeline struct{}
 
 func (p Pipeline) Process(file_path string) error {
+
+	headers, body, err := p.parseFile(file_path)
+	if err != nil {
+		return err
+	}
+
+	err = p.saveToDb(headers, body)
+	return err
+}
+
+func isHeaderLine(line string) bool {
+	return strings.HasPrefix(line, "---") &&
+		(len(line) == 3 || (len(line) > 3 && line[3] != '-'))
+}
+
+func (d Pipeline) parseFile(file_path string) (headers map[string]string, body string, err error) {
 	file, err := os.Open(file_path)
 	if err != nil {
 		log.Printf("Cannot open file %s: %s", file_path, err)
-		return err
+		return
 	}
 	defer file.Close()
 
-	headers := make(map[string]string)
-
 	var (
-		// headerBuilder strings.Builder
 		bodyBuilder strings.Builder
 		inBody      bool
 	)
+
+	headers = make(map[string]string)
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -45,24 +60,29 @@ func (p Pipeline) Process(file_path string) error {
 		}
 	}
 
-	if err := scanner.Err(); err != nil {
+	if err = scanner.Err(); err != nil {
 		log.Printf("Error reading file: %s", err)
-		return err
+		return
 	}
+	body = bodyBuilder.String()
+	return
+}
+
+func (p Pipeline) saveToDb(headers map[string]string, body string) error {
+	db_path := "/data/db"
 
 	// Required fields
 	collector := headers["collector"]
 	device := headers["device"]
-	// probeID := headers["probe_id"]
 	endpoint := headers["endpoint"]
 
 	if collector == "" || device == "" || endpoint == "" {
-		err = fmt.Errorf("missing required headers: collector, device, probe_id, or endpoint")
+		err := fmt.Errorf("missing required headers: collector, device, probe_id, or endpoint")
 		log.Printf("Parsing error: %s", err)
 		return err
 	}
 
-	dirPath := filepath.Join("/data/db", collector, device)
+	dirPath := filepath.Join(db_path, collector, device)
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		err = fmt.Errorf("failed to create directory %s: %w", dirPath, err)
 		log.Print(err)
@@ -71,17 +91,10 @@ func (p Pipeline) Process(file_path string) error {
 
 	// Save body to file
 	filePath := filepath.Join(dirPath, endpoint)
-	if err := os.WriteFile(filePath, []byte(bodyBuilder.String()), 0644); err != nil {
+	if err := os.WriteFile(filePath, []byte(body), 0644); err != nil {
 		err = fmt.Errorf("failed to write body to file: %w", err)
 		log.Print(err)
 		return err
 	}
-
-	fmt.Printf("Saved body to %s\n", filePath)
 	return nil
-}
-
-func isHeaderLine(line string) bool {
-	return strings.HasPrefix(line, "---") &&
-		(len(line) == 3 || (len(line) > 3 && line[3] != '-'))
 }
