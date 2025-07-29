@@ -7,8 +7,6 @@ export const useApiStore = defineStore('api', () => {
   const collectors = ref(null)
   const fetchError = ref(null)
 
-  const httpUrl = ref(import.meta.env.VITE_HTTP_PROTOCOL + '://' + import.meta.env.VITE_API_HOST);
-
   const policiesUrl = computed(() => {
     return `${import.meta.env.VITE_APP_POLICY_ENDPOINT}`; 
   })
@@ -84,5 +82,5 @@ export const useApiStore = defineStore('api', () => {
   }
 
 
-  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState, httpUrl, policiesUrl, probesUrl, collectorsUrl }
+  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState, policiesUrl, probesUrl, collectorsUrl }
 });
