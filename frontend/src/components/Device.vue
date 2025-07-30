@@ -34,6 +34,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Endpoint from './Endpoint.vue'
+import { useApiStore } from '@/stores/apiStore'
+
+const apiStore = useApiStore()
 
 const props = defineProps({
   collector: String,
@@ -44,7 +47,7 @@ const endpoints = ref([])
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/v1/data/collector/${props.collector}/${props.device}`)
+        const res = await fetch(apiStore.deviceEndpoint(props.collector,props.device))
     if (!res.ok) throw new Error(`Failed to load endpoints for ${props.device}`)
     const data = await res.json()
     endpoints.value = data["endpoints"] || []
@@ -52,4 +55,5 @@ onMounted(async () => {
     console.error(err)
   }
 })
+ 
 </script>

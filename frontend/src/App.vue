@@ -3,16 +3,16 @@ import { RouterLink, RouterView } from 'vue-router'
 import { onMounted } from 'vue'
 import Header from './components/Header.vue'
 import { useApiStore } from '@/stores/apiStore'
-import { useWsConnectionStore } from '@/stores/wsStore'
+
+import ws from '@/services/websocket'
 
 const apiStore = useApiStore()
-const ws = useWsConnectionStore()
 
 onMounted(() => {
   apiStore.loadCollectors()
   apiStore.loadPolicies()
   apiStore.loadProbes()
-  ws.connect()
+  ws.connectWebSocket()
 })
 </script>
 

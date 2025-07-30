@@ -34,6 +34,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Device from './Device.vue'
+import { useApiStore } from '@/stores/apiStore'
+
+const apiStore = useApiStore()
 
 const props = defineProps({
   collector: String,
@@ -44,7 +47,7 @@ const devices = ref([])
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/v1/data/collector/${props.collector}`)
+    const res = await fetch(apiStore.collectorEndpoint(props.collector))
     if (!res.ok) throw new Error(`Failed to load devices for ${props.collector}`)
     const data = await res.json()
     devices.value = data["devices"] || []
@@ -52,4 +55,5 @@ onMounted(async () => {
     console.error(err)
   }
 })
+
 </script>

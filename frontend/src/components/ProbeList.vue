@@ -1,9 +1,8 @@
 <script setup>
 import { ref, onMounted, computed, watch  } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
-import { useWsConnectionStore } from '@/stores/wsStore'
+import { sendMessage, MESSAGE_TYPE } from '@/services/messages'
 import { Modal } from "bootstrap";
-import { MESSAGE_TYPE } from '@/stores/messages'
 import { useSessionStore } from '@/stores/sessionStore'
 
 const newProbe = {
@@ -17,7 +16,6 @@ const newProbe = {
     password: null
 }
 const apiStore = useApiStore()
-const ws = useWsConnectionStore()
 const sessionStore = useSessionStore()
 
 const state = ref({
@@ -57,7 +55,7 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
+  const session = sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";
@@ -66,7 +64,7 @@ function runProbe(probe) {
 }
 
 function validateProbe(probe) {
-  const session = ws.sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
+  const session = sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";

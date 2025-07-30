@@ -6,7 +6,7 @@ export const useSessionStore = defineStore('session', () => {
   const sessions = reactive({});
 
   // action: handle incoming websocket data
-  function handleWebSocketMessage(data) {
+  function saveSession(data) {
     console.log('📥 WebSocket message received:', data);
     if (data.Session) {
       sessions[data.Session] = data;
@@ -21,7 +21,7 @@ export const useSessionStore = defineStore('session', () => {
   // expose reactive state and actions (toRefs to destructure if needed)
   return {
     sessions,
-    handleWebSocketMessage,
+    saveSession,
     clearSession,
   };
 });

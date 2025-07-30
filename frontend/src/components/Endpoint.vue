@@ -8,6 +8,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useApiStore } from '@/stores/apiStore'
+
+const apiStore = useApiStore()
 
 const props = defineProps({
   collector: String,
@@ -21,7 +24,7 @@ const error = ref(null)
 
 onMounted(async () => {
   try {
-    const res = await fetch(`/api/v1/data/collector/${props.collector}/${props.device}/${props.endpoint}`)
+    const res = await fetch(apiStore.endpointEndpoint(props.collector,props.device,props.endpoint))
     if (!res.ok) throw new Error('Failed to load endpoint data')
     content.value = await res.text()
   } catch (err) {

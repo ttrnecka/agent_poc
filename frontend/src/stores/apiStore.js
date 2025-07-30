@@ -1,45 +1,81 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
+const POLICY_ENDPOINT="/api/v1/policy"
+const PROBE_ENDPOINT="/api/v1/probe"
+const COLLECTORS_ENDPOINT="/api/v1/collector"
+const COLLECTOR_ENDPOINT="/api/v1/data/collector/"
+
+const collectorEndpoint = (collector) => `${COLLECTOR_ENDPOINT}${collector}`
+const deviceEndpoint = (collector,device) => `${COLLECTOR_ENDPOINT}${collector}/${device}`
+const endpointEndpoint = (collector,device,endpoint) => `${COLLECTOR_ENDPOINT}${collector}/${device}/${endpoint}`
+
 export const useApiStore = defineStore('api', () => {
   const policies = ref(null)
   const probes = ref(null)
   const collectors = ref(null)
   const fetchError = ref(null)
 
-  const policiesUrl = computed(() => {
-    return `${import.meta.env.VITE_APP_POLICY_ENDPOINT}`; 
-  })
+  async function load(url, ref, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-  const probesUrl = computed(() => {
-    return `${import.meta.env.VITE_APP_PROBE_ENDPOINT}`; 
-  })
+    try {
+      const res = await fetch(url, { signal: controller.signal });
 
-  const collectorsUrl = computed(() => {
-    return `${import.meta.env.VITE_APP_COLLECTOR_ENDPOINT}`;
-  })
-  
-  async function load(url,ref) {
-    try {  
-      const res = await fetch(
-        url
-      )
-      ref.value = await res.json()
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        throw new Error(`API service not available: HTTP status: ${res.status}`);
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonError) {
+        throw new Error("Failed to parse JSON response");
+      }
+
+      ref.value = data;
+
     } catch (error) {
-      console.error("Error:", error.message);
-      fetchError.value = error;
+        console.error("Fetch failed:", error.name === 'AbortError' ? 'Request timed out' : error.message || error);
+        fetchError.value = error;
     }
   }
+
+  // async function loadAndReturn(url, timeoutMs = 10000) {
+  //   const controller = new AbortController();
+  //   const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  //   try {
+  //     const res = await fetch(url, { signal: controller.signal });
+  //     clearTimeout(timeout);
+
+  //     if (!res.ok) {
+  //       throw new Error(`API service not available: HTTP status: ${res.status}`);
+  //     }
+
+  //     const data = await res.json();
+  //     return { data, error: null };
+  //   } catch (error) {
+  //     clearTimeout(timeout);
+  //     const errMsg = error.name === 'AbortError' ? 'Request timed out' : error.message || error;
+  //     console.error("Fetch failed:", errMsg);
+  //     return { data: null, error };
+  //   }
+  // }
+
   async function loadPolicies() {
-    await load(policiesUrl.value,policies)
+    await load(POLICY_ENDPOINT,policies)
   }
   
   async function loadProbes() {
-    await load(probesUrl.value,probes)
+    await load(PROBE_ENDPOINT,probes)
   }
 
   async function loadCollectors() {
-    await load(collectorsUrl.value,collectors)
+    await load(COLLECTORS_ENDPOINT,collectors)
   }
 
   async function saveProbes(data) {
@@ -82,5 +118,6 @@ export const useApiStore = defineStore('api', () => {
   }
 
 
-  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState, policiesUrl, probesUrl, collectorsUrl }
+  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState,
+           endpointEndpoint, deviceEndpoint, collectorEndpoint }
 });

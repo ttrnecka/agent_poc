@@ -1,31 +1,32 @@
 <template>
-  <div class="container mt-4">
-    <div class="accordion" id="collectorsAccordion">
+  <div>
+    <p v-if="!apiStore.collectors">{{ loadedMessage }}</p>
+    <div v-else class="accordion" id="collectorsAccordion">
       <div
         class="accordion-item"
-        v-for="collector in collectors"
-        :key="collector"
+        v-for="(collector,collector_name) in apiStore.collectors"
+        :key="collector_name"
       >
-        <h2 class="accordion-header" :id="`heading-${collector}`">
+        <h2 class="accordion-header" :id="`heading-${collector_name}`">
           <button
             class="accordion-button collapsed"
             type="button"
             data-bs-toggle="collapse"
-            :data-bs-target="`#collapse-${collector}`"
+            :data-bs-target="`#collapse-${collector_name}`"
             aria-expanded="false"
-            :aria-controls="`collapse-${collector}`"
+            :aria-controls="`collapse-${collector_name}`"
           >
-            {{ collector }}
+            {{ collector_name }}
           </button>
         </h2>
         <div
-          :id="`collapse-${collector}`"
+          :id="`collapse-${collector_name}`"
           class="accordion-collapse collapse"
-          :aria-labelledby="`heading-${collector}`"
+          :aria-labelledby="`heading-${collector_name}`"
           data-bs-parent="#collectorsAccordion"
         >
           <div class="accordion-body">
-            <Collector :collector="collector" :accordion-id="collector" />
+            <Collector :collector="collector_name" :accordion-id="collector_name" />
           </div>
         </div>
       </div>
@@ -34,32 +35,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Collector from './Collector.vue'
+import { useApiStore } from '@/stores/apiStore'
 
-const collectors = ref([])
 const route = useRoute()
+const apiStore = useApiStore()
 
-const fetchCollectors = async () => {
-  try {
-    const res = await fetch('/api/v1/data/collector')
-    if (!res.ok) throw new Error('Failed to load collectors')
-    collectors.value = await res.json()
-  } catch (err) {
-    console.error(err)
-  }
-}
+const loadingText = "Loading..."
 
-// Initial fetch on mount
-onMounted(fetchCollectors)
+const loadedMessage = computed(() => {
+  return apiStore.fetchError ? apiStore.fetchError.message : loadingText
+})
 
 // Watch route changes, reload only if we are on /inventory path
 watch(
   () => route.fullPath,
   (newPath) => {
     if (newPath === '/inventory') {
-      fetchCollectors()
+      apiStore.loadCollectors()
     }
   }
 )
