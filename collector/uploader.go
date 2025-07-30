@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -46,7 +45,7 @@ func (q *UploadQueue) Enqueue(filePath string) {
 	select {
 	case q.queue <- filePath:
 	default:
-		fmt.Println("Queue full. Dropping:", filePath)
+		logger.Error().Str("file", filePath).Msg("Queue full. Dropping file")
 	}
 }
 
@@ -72,17 +71,17 @@ func (q *UploadQueue) uploadWithRetries(filePath string, retries int) {
 			deleteFile(filePath)
 			return
 		}
-		fmt.Printf("Retry %d for %s: %v\n", attempt, filePath, err)
+		logger.Error().Err(err).Str("file", filePath).Int("retry", attempt).Msg("Failed to upload file")
 		time.Sleep(time.Duration(attempt) * time.Second)
 	}
-	fmt.Println("Failed to upload after retries:", filePath)
+	logger.Error().Str("file", filePath).Int("retries", retries).Msg("Failed to upload file after several retries")
 }
 
 func deleteFile(path string) {
-	log.Printf("Deleting file: %s", path)
+	logger.Info().Str("filepath", path).Msg("Deleting file")
 	err := os.Remove(path)
 	if err != nil {
-		log.Printf("Error deleting file: %v", err)
+		logger.Error().Err(err).Str("filepath", path).Msg("Error deleting file")
 		return
 	}
 }
@@ -121,6 +120,6 @@ func uploadFile(path string) error {
 		return fmt.Errorf("bad response: %d - %s", resp.StatusCode, string(body))
 	}
 
-	fmt.Println("Uploaded:", path)
+	logger.Info().Str("file", path).Msg("Uploaded file")
 	return nil
 }

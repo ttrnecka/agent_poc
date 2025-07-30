@@ -1,6 +1,7 @@
 import { getClientId } from './auth.js'
 import ws from '@/services/websocket'
 import { useApiStore } from '@/stores/apiStore';
+import { v4 as uuidv4 } from 'uuid';
 
 export const MESSAGE_TYPE = {
   'ONLINE': 1,

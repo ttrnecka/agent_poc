@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,65 +22,75 @@ type CommandResult struct {
 }
 
 func run(mes ws.Message, mh *MessageHandler) {
-	log.Printf("Running policy for source %s with message: %s", mes.Source, mes.Text)
+	logger.Info().Str("source", mes.Source).Str("text", mes.Text).Msg("Running policy")
 
-	envs, parts, probeId := parseEnvAssignments(mes.Text)
+	result := make(chan CommandResult)
+
+	closeResult := func(cr CommandResult) {
+		result <- cr
+		close(result)
+	}
+	go runNotifyLoop(mes, mh, result)
+
+	envs, parts, probeId, err := parseEnvAssignments(mes.Text)
+	if err != nil {
+		closeResult(CommandResult{Code: 255, Err: err})
+		return
+	}
 
 	output_folder, err := os.MkdirTemp(*tmpPath, parts[0])
 	if err != nil {
-		panic(err)
+		closeResult(CommandResult{Code: 255, Err: err})
+		return
 	}
-	log.Printf("Created temporary upload folder: %s", output_folder)
+	logger.Info().Str("folder", output_folder).Msg("Created temporary upload folder")
 
 	// the rest of the process saves the files to output_folder
 	// at the and process the folder and delete the folder
 	defer func() {
 		processFolder(output_folder, *watchPath, *source, parts[0], probeId)
-		log.Println("Deleting temproary upload folder")
+		logger.Info().Msg("Deleting temporary upload folder")
 		err := os.RemoveAll(output_folder)
 		if err != nil {
-			log.Println(fmt.Errorf("cannot delete %s: %w", output_folder, err))
+			logger.Error().Err(err).Str("folder", output_folder).Msg("Cannot delete folder")
 		}
-		log.Printf("Deleted temporary upload folder: %s", output_folder)
+		logger.Info().Str("folder", output_folder).Msg("Deleted temporary upload folder")
 	}()
 
 	parts = append(parts, "--output_folder", output_folder)
 	// TODO: obfuscate credentials env variables
-	log.Printf("Parsed environment variables: %v", envs)
-	log.Printf("Parsed command parts: %v", parts)
+	logger.Debug().Str("envs", fmt.Sprintf("%+v", envs)).Msg("Parsed environment variables")
+	logger.Debug().Str("parts", fmt.Sprintf("%+v", parts)).Msg("Parsed command parts")
+
 	cmd := exec.Command(fmt.Sprintf("./bin/%s", parts[0]), parts[1:]...)
 	cmd.Env = append(os.Environ(), envs...)
 
+	cr := CommandResult{}
+	logger.Info().Str("policy", parts[0]).Msg("Running policy")
+	output, err := cmd.CombinedOutput()
+
+	cr.Output = output
+	time.Sleep(3000 * time.Millisecond) // Simulate some processing delay
+	logger.Debug().Str("output", string(output)).Msg("Command output")
+
+	// Check if there was an error (non-zero exit or command failure)
+	if err != nil {
+		// If it's an ExitError, we can get the exit code
+		cr.Err = err
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			cr.Code = exitErr.ExitCode()
+		} else {
+			// If it's another kind of error (e.g., command not found), just set dummy non-0 code
+			cr.Code = 255
+		}
+	}
+	logger.Info().Int("exit code", cr.Code).Msg("")
+	closeResult(cr)
+}
+
+func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult) {
 	ticker := time.NewTicker(2000 * time.Millisecond)
 	defer ticker.Stop()
-
-	result := make(chan CommandResult)
-
-	// execute the command in goroutine and pass results to result channel
-	go func() {
-		cr := CommandResult{}
-		log.Printf("Running plugin %s", parts[0])
-		output, err := cmd.CombinedOutput()
-
-		cr.Output = output
-		time.Sleep(3000 * time.Millisecond) // Simulate some processing delay
-		log.Printf("Command output: %s", output)
-
-		// Check if there was an error (non-zero exit or command failure)
-		if err != nil {
-			// If it's an ExitError, we can get the exit code
-			cr.Err = err
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				cr.Code = exitErr.ExitCode()
-			} else {
-				// If it's another kind of error (e.g., command not found), just set dummy non-0 code
-				cr.Code = 255
-			}
-		}
-		log.Printf("Exit Code: %d\n", cr.Code)
-		result <- cr
-		close(result)
-	}()
 
 	for {
 		select {
@@ -96,7 +105,7 @@ func run(mes ws.Message, mh *MessageHandler) {
 			m := ws.NewMessage(mc, *source, mes.Source, text)
 			m.Session = mes.Session
 
-			log.Printf("Sending FINISHED message: %v", m)
+			logger.Info().Str("raw", fmt.Sprintf("%+v", m)).Msg("Sending FINISHED message")
 			err := mh.SendMessage(m)
 			if err != nil {
 				return
@@ -119,7 +128,7 @@ func run(mes ws.Message, mh *MessageHandler) {
 			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, sb.String())
 			m.Session = mes.Session
 
-			log.Printf("Sending DATA message: %v", m)
+			logger.Info().Str("raw", fmt.Sprintf("%+v", m)).Msg("Sending DATA message")
 			err = mh.SendMessage(m)
 			if err != nil {
 				return
@@ -131,20 +140,22 @@ func run(mes ws.Message, mh *MessageHandler) {
 			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
 			m.Session = mes.Session
 
-			log.Printf("Sending RUNNING message: %v", m)
-			err = mh.SendMessage(m)
-			if err != nil {
-				return
+			logger.Info().Str("raw", fmt.Sprintf("%+v", m)).Msg("Sending RUNNING message")
+			err := mh.SendMessage(m)
+			if err == nil {
+				// if the first message update worked we stop the ticker else we try again later
+				ticker.Stop()
 			}
 		}
 	}
 }
 
-func parseEnvAssignments(input string) ([]string, []string, string) {
+func parseEnvAssignments(input string) ([]string, []string, string, error) {
 	tokens, err := shlex.Split(input)
 
 	if err != nil {
-		log.Fatal(err)
+		logger.Error().Err(err).Msg("Cannot read command line")
+		return nil, nil, "", err
 	}
 
 	var envVars []string
@@ -165,16 +176,16 @@ func parseEnvAssignments(input string) ([]string, []string, string) {
 			break
 		}
 	}
-	return envVars, rest, probeId
+	return envVars, rest, probeId, nil
 }
 
 func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 
-	log.Printf("Reading source folder %s", src_folder)
+	logger.Info().Str("folder", src_folder).Msg("Reading source folder")
 	// Read all entries in the source directory
 	entries, err := os.ReadDir(src_folder)
 	if err != nil {
-		log.Println(fmt.Errorf("failed to read source folder: %w", err))
+		logger.Error().Err(err).Str("folder", src_folder).Msg("Failed to read source folder")
 	}
 	uUID := uuid.New().String()
 	for _, entry := range entries {
@@ -185,17 +196,18 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 		srcPath := filepath.Join(src_folder, entry.Name())
 		destPath := filepath.Join(dest_folder, entry.Name())
 
+		logger.Info().Str("file", srcPath).Msg("Processing file")
+
 		timestamp, device, endpoint, err := parseFilename(entry.Name())
-		log.Printf("Processing file: %s", srcPath)
 		if err != nil {
-			fmt.Println("Error:", err)
+			logger.Error().Err(err).Msg("File name error")
 			return
 		}
 
 		// Read file content
 		content, err := os.ReadFile(srcPath)
 		if err != nil {
-			log.Println(fmt.Errorf("failed to read file %s: %w", srcPath, err))
+			logger.Error().Err(err).Str("file", srcPath).Msg("Failed to read file")
 		}
 
 		// Prepend namePrefix
@@ -212,9 +224,9 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 		// Write modified content to destination
 		err = os.WriteFile(destPath, modifiedContent, 0644)
 		if err != nil {
-			log.Println(fmt.Errorf("failed to write file %s: %w", destPath, err))
+			logger.Error().Err(err).Str("file", destPath).Msg("Failed to write file")
 		}
-		log.Printf("New file written: %s", destPath)
+		logger.Info().Str("file", destPath).Msg("New file written")
 	}
 }
 

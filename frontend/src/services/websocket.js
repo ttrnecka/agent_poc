@@ -10,7 +10,9 @@ let isManuallyClosed = false
 const MAX_RECONNECT_ATTEMPTS = 10
 const RECONNECT_DELAY_BASE = 1000 // 1s, exponential backoff
 
-const wsUrl = import.meta.env.VITE_WS_PROTOCOL + '://' + location.host + '/ws';
+const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+
+const wsUrl = wsProtocol + '://' + location.host + '/ws';
 
 function connectWebSocket () {
 

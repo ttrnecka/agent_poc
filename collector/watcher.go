@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -42,15 +41,19 @@ func (rw *Watcher) eventLoop() {
 	ticker := time.NewTicker(60 * time.Second)
 	defer ticker.Stop()
 	for {
+		walk := false
 		select {
 		case <-rw.process:
-			log.Printf("Adhoc queue processing")
-			rw.walkAndEnqueue()
+			logger.Info().Msg("Adhoc queue processing")
+			walk = true
 		case <-ticker.C:
-			log.Printf("Scheduled queue processing")
-			rw.walkAndEnqueue()
+			logger.Info().Msg("Scheduled queue processing")
+			walk = true
 		case <-rw.done:
 			return
+		}
+		if walk {
+			rw.walkAndEnqueue()
 		}
 	}
 }
@@ -63,7 +66,7 @@ func (rw *Watcher) walkAndEnqueue() {
 
 	entries, err := os.ReadDir(rw.watchRoot)
 	if err != nil {
-		log.Printf("Error accessing path %q: %v\n", rw.watchRoot, err)
+		logger.Error().Err(err).Str("path", rw.watchRoot).Msg("Error accessing path")
 	}
 
 	for _, entry := range entries {
@@ -73,6 +76,7 @@ func (rw *Watcher) walkAndEnqueue() {
 		}
 
 		srcPath := filepath.Join(rw.watchRoot, entry.Name())
+		logger.Debug().Str("file", srcPath).Msg("Queuing for upload")
 		rw.queue.Enqueue((srcPath))
 
 	}

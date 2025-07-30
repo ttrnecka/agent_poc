@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/url"
 	"sync"
 	"time"
@@ -36,10 +36,6 @@ func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
 		ticker:   time.NewTicker(5 * time.Second),
 	}
 
-	// // Debug: watch for when h is GC'd
-	// runtime.SetFinalizer(h, func(m *MessageHandler) {
-	// 	log.Println("MessageHandler finalized (GC collected)")
-	// })
 	return h
 }
 
@@ -51,7 +47,7 @@ func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
 func (m *MessageHandler) Start() {
 	err := m.connectWebSocket()
 	if err != nil {
-		log.Printf("error opening websocket: %s", err)
+		logger.Error().Err(err).Msg("Error opening websocket")
 	}
 	go m.readLoop()
 	go m.processLoop()
@@ -91,7 +87,7 @@ func (m *MessageHandler) readLoop() {
 		err := m.c.ReadJSON(&mes)
 		// _, mes, err := c.ReadMessage()
 		if err != nil {
-			log.Println("websocket read:", err)
+			logger.Error().Err(err).Msg("Websocket read error")
 			return
 		}
 		m.messages <- Message{Message: mes, c: m.c}
@@ -105,7 +101,7 @@ func (m *MessageHandler) processLoop() {
 		case <-m.ticker.C:
 			err := m.sendHeartbeat()
 			if err != nil {
-				log.Printf("Failed to send heartbeat message: %v", err)
+				logger.Error().Err(err).Msg("Failed to send heartbeat message")
 			}
 		case <-m.done:
 			// clean up rest of the resources
@@ -116,16 +112,14 @@ func (m *MessageHandler) processLoop() {
 				return
 			}
 			// TODO needs to make this into pool of worker or as go routines
-			log.Printf("websocket received: %v", msg)
+			logger.Debug().Str("raw", fmt.Sprintf("%+v", msg)).Msg("Websocket message received")
 			if msg.Destination == m.id {
 				if msg.Type == ws.MSG_REFRESH {
 					refresh()
 				}
 				if msg.Type == ws.MSG_RUN {
 					run(msg.Message, m)
-					log.Printf("Sending process message")
 					m.watcher.Process()
-					log.Printf("Sent process message")
 				}
 			}
 		}
@@ -141,11 +135,11 @@ func (m *MessageHandler) closeWebSocket() {
 		return
 	}
 
-	log.Println("Sending offline message")
+	logger.Info().Msg("Sending offline message")
 
 	err := m.SendMessage(ws.NewMessage(ws.MSG_OFFLINE, m.id, "hub", "Collector is going offline"))
 	if err == nil {
-		log.Println("Offline message sent. Sending WS close message")
+		logger.Info().Msg("Offline message sent. Sending WS close message")
 	}
 
 	//special message type
@@ -153,9 +147,9 @@ func (m *MessageHandler) closeWebSocket() {
 	err = m.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	m.mu.Unlock()
 	if err != nil {
-		log.Println("write close:", err)
+		logger.Error().Err(err).Msg("WS close failed")
 	} else {
-		log.Println("WS close message sent")
+		logger.Info().Msg("WS close message sent")
 	}
 	// as long as this is called in the Stop only this does not make much sense
 	select {
@@ -165,19 +159,19 @@ func (m *MessageHandler) closeWebSocket() {
 }
 
 func (m *MessageHandler) sendHeartbeat() error {
-	log.Println("Sending heartbeat message")
+	logger.Debug().Msg("Sending heartbeat message")
 
 	err := m.SendMessage(ws.NewMessage(ws.MSG_ONLINE, m.id, "hub", "Collector is online"))
 	if err != nil {
 		return err
 	}
-	log.Println("Heartbeat sent")
+	logger.Debug().Msg("Heartbeat sent")
 	return nil
 }
 
 func (m *MessageHandler) connectWebSocket() error {
 	u := url.URL{Scheme: "ws", Host: m.addr, Path: "/ws"}
-	log.Printf("connecting to %s", u.String())
+	logger.Info().Str("url", u.String()).Msg("Connecting to WS")
 	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
 	if err != nil {
 		return err
@@ -188,13 +182,13 @@ func (m *MessageHandler) connectWebSocket() error {
 
 func (m *MessageHandler) SendMessage(message ws.Message) error {
 	m.mu.Lock()
-	log.Printf("Sending WS message")
+	logger.Debug().Str("raw", fmt.Sprintf("%+v", message)).Msg("Sending WS message")
 	err := m.c.WriteJSON(message)
 	m.mu.Unlock()
 	if err != nil {
-		log.Printf("Sending WS message failed: %v\n", err)
+		logger.Error().Err(err).Msg("Sending WS message failed")
 	} else {
-		log.Printf("Sending WS message succeeded")
+		logger.Debug().Msg("Sending WS message succeeded")
 	}
 	return err
 }

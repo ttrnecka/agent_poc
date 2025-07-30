@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,12 +18,14 @@ var tmpPath = flag.String("tmp", "/data/tmp", "root folder where collector instr
 func main() {
 	flag.Parse()
 
+	setupLogger()
+
 	if err := os.MkdirAll(*tmpPath, 0755); err != nil {
-		log.Println(fmt.Errorf("failed to create directory: %w", err))
+		logger.Fatal().Err(fmt.Errorf("failed to create directory: %w", err)).Msg("")
 	}
 
 	if err := os.MkdirAll(*watchPath, 0755); err != nil {
-		log.Println(fmt.Errorf("failed to create directory: %w", err))
+		logger.Fatal().Err(fmt.Errorf("failed to create directory: %w", err)).Msg("")
 	}
 
 	interrupt := make(chan os.Signal, 1)
@@ -41,7 +42,7 @@ func main() {
 	go func() {
 		err := refresh()
 		if err != nil {
-			log.Println(err)
+			logger.Error().Err(err).Msg("")
 		}
 	}()
 
@@ -49,16 +50,16 @@ func main() {
 
 	reconnectDelay := 5 // seconds
 	for {
-		log.Println("Starting MessageHandler and event loop...")
+		logger.Info().Msg("Starting MessageHandler and event loop...")
 		messageHandler := NewMessageHandler(*addr, *source, watcher)
 		messageHandler.Start()
 
 		shouldExit := eventLoop(interrupt, uploadQueue, watcher, messageHandler)
 		if shouldExit {
-			log.Println("Shutting down main loop due to interrupt signal.")
+			logger.Info().Msg("Shutting down main loop due to interrupt signal.")
 			break
 		}
-		log.Printf("WebSocket connection lost, retrying in %d seconds...", reconnectDelay)
+		logger.Info().Msg(fmt.Sprintf("WebSocket connection lost, retrying in %d seconds...", reconnectDelay))
 		time.Sleep(time.Duration(reconnectDelay) * time.Second)
 	}
 }
@@ -68,10 +69,10 @@ func eventLoop(interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watc
 	for {
 		select {
 		case <-mh.done:
-			log.Println("WebSocket connection closed or failed, will attempt to reconnect.")
+			logger.Info().Msg("WebSocket connection closed or failed, will attempt to reconnect.")
 			return false // signal to reconnect
 		case <-interrupt:
-			log.Println("Received interrupt signal")
+			logger.Info().Msg("Received interrupt signal")
 			mh.Stop()
 			watcher.Stop()
 			uploadQueue.Stop()

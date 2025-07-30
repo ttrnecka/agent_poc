@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -24,10 +23,11 @@ func refresh() error {
 	defer refreshMU.Unlock()
 
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
-	log.Println("Refreshing probes")
+	logger.Info().Msg("Refreshing probes")
+
 	res, err := http.Get(requestURL)
 	if err != nil {
-		log.Print(fmt.Errorf("probe refresh: %w", err))
+		logger.Error().Err(err).Msg("Probe refresh failure")
 		return err
 	}
 	defer res.Body.Close()
@@ -35,7 +35,7 @@ func refresh() error {
 	var probes []api.Probe
 	err = json.NewDecoder(res.Body).Decode(&probes)
 	if err != nil {
-		log.Print(fmt.Errorf("probe body: %w", err))
+		logger.Error().Err(err).Msg("Probe body read failure")
 		return err
 	}
 
@@ -60,18 +60,21 @@ func refresh() error {
 		}
 	}
 
+	logger.Debug().Str("policies", fmt.Sprintf("%+v", policies)).Msg("Parsed policies")
+
 	// download policies
 	// TODO: compare policies with existing policies and delete those no longer needed
 	for name, versions := range policies {
 		for _, version := range versions {
-			file_name := fmt.Sprintf("bin/%s_%s", name, version)
+			policy_name := fmt.Sprintf("%s_%s", name, version)
+			file_name := fmt.Sprintf("bin/%s", policy_name)
 			if _, err := os.Stat(file_name); err != nil {
 				err = downloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version))
 				if err != nil {
-					log.Printf("Error downloading %s: %v", file_name, err)
+					logger.Error().Err(err).Str("file", policy_name).Msg("Error downloading policy")
 				}
 			} else {
-				log.Printf("File %s already exists, skipping download", file_name)
+				logger.Info().Str("file", policy_name).Msg("Policy already exists, skipping download")
 			}
 		}
 	}
@@ -81,7 +84,7 @@ func refresh() error {
 
 func downloadFile(filepath string, url string) error {
 
-	fmt.Printf("Downloading %s\n", filepath)
+	logger.Info().Str("filepath", filepath).Msg("Downloading")
 	// Get the data
 	resp, err := http.Get(url)
 	if err != nil {
@@ -110,7 +113,7 @@ func downloadFile(filepath string, url string) error {
 }
 
 func makeExecutable(filePath string) error {
-	log.Printf("Setting execute permissions on: %s", filePath)
+	logger.Info().Str("filepath", filePath).Msg("Setting execute permissions")
 	switch runtime.GOOS {
 	case "linux", "darwin":
 		// Use chmod to set executable bit (755)

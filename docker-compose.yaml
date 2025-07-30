@@ -61,6 +61,8 @@ services:
     command: ["--addr", "webapi:8888", "--source", "collector1","--ingest","ingest_service:8888"]
     depends_on:
       - webapi
+    volumes:
+      - ./logs/collector:/logs
   collector2:
     build:
       context: . 
