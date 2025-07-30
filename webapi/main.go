@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	setupLogger()
+
 	srv := &http.Server{
 		Addr:    ":8888",
 		Handler: router(),

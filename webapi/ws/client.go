@@ -2,7 +2,6 @@ package ws
 
 import (
 	"bytes"
-	"log"
 	"net/http"
 	"time"
 
@@ -49,10 +48,11 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		logger.Error().Err(err).Msg("")
 		return
 	}
 
+	logger.Info().Str("client", conn.RemoteAddr().String()).Msg("Websocket client opened conenction")
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
 
@@ -67,7 +67,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 func setupPongHandler(conn *websocket.Conn) {
 	remoteAddr := conn.RemoteAddr().String()
 	conn.SetPongHandler(func(appData string) error {
-		log.Printf("Received pong from client %s (appData: %q)\n", remoteAddr, appData)
+		logger.Debug().Str("cliet", remoteAddr).Str("raw", appData).Msg("Received pong from client")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
@@ -90,7 +90,7 @@ func (c *Client) readPump() {
 		_, message, err := c.conn.ReadMessage()
 		// if we cannot read message, we close the connection and drop the client list
 		if err != nil {
-			log.Printf("read error: %v", err)
+			logger.Error().Err(err).Str("client", c.conn.RemoteAddr().String()).Msg("WS read error")
 			break
 		}
 		// refresh deadline may be required if the client is not sending pongs to my pings
@@ -128,14 +128,14 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-				log.Printf("nextwrite error: %v", err)
+				logger.Error().Err(err).Str("client", c.conn.RemoteAddr().String()).Msg("NextWriter error")
 				return
 			}
 			// Write the message to the websocket connection.
 			// do not return if there is failure as we want to run Close
 			_, err = w.Write(message)
 			if err != nil {
-				log.Printf("write error: %v", err)
+				logger.Error().Err(err).Str("client", c.conn.RemoteAddr().String()).Msg("NextWriter error")
 				// return
 			}
 			// If you uncomment this all the json messages will be sent in one go and the client will have to handle it
@@ -149,13 +149,13 @@ func (c *Client) writePump() {
 			// }
 
 			if err := w.Close(); err != nil {
-				log.Printf("close error: %v", err)
+				logger.Error().Err(err).Str("client", c.conn.RemoteAddr().String()).Msg("WS close error")
 				return
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Printf("write ping error: %v", err)
+				logger.Error().Err(err).Str("client", c.conn.RemoteAddr().String()).Msg("WS write ping error")
 				return
 			}
 		}

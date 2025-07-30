@@ -57,10 +57,11 @@ func (h *Hub) Run() {
 		case message := <-h.broadcast:
 			var msg Message
 			if err := json.Unmarshal(message, &msg); err != nil {
-				fmt.Printf("unmarshal error: %v\n", err)
-			} else {
-				fmt.Printf("recv: %+v\n", msg)
+				logger.Error().Err(err).Str("raw", fmt.Sprintf("%+v", message)).Msg("Unmarshal error")
+				continue
 			}
+			logger.Debug().Str("raw", fmt.Sprintf("%+v", msg)).Msg("Received message")
+
 			// Send the message to all registered clients
 			// if the client's send channel is full, close it and remove the client
 			for client := range h.clients {
