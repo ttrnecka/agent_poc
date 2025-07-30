@@ -28,12 +28,9 @@ type MessageHandler struct {
 
 func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
 	h := &MessageHandler{
-		addr:     addr,
-		id:       id,
-		done:     make(chan struct{}),
-		messages: make(chan Message, 100),
-		watcher:  watcher,
-		ticker:   time.NewTicker(5 * time.Second),
+		addr:    addr,
+		id:      id,
+		watcher: watcher,
 	}
 
 	return h
@@ -45,6 +42,9 @@ func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
 // Caller should call Stop() if they want to close the handler. There is no need to call the Stop() if the done channel was closed
 
 func (m *MessageHandler) Start() {
+	m.done = make(chan struct{})
+	m.messages = make(chan Message, 100)
+	m.ticker = time.NewTicker(5 * time.Second)
 	err := m.connectWebSocket()
 	if err != nil {
 		logger.Error().Err(err).Msg("Error opening websocket")

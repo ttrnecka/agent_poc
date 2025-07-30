@@ -48,35 +48,26 @@ func main() {
 
 	go watcher.Start()
 
-	reconnectDelay := 5 // seconds
-	for {
-		logger.Info().Msg("Starting MessageHandler and event loop...")
-		messageHandler := NewMessageHandler(*addr, *source, watcher)
-		messageHandler.Start()
+	messageHandler := NewMessageHandler(*addr, *source, watcher)
 
-		shouldExit := eventLoop(interrupt, uploadQueue, watcher, messageHandler)
-		if shouldExit {
-			logger.Info().Msg("Shutting down main loop due to interrupt signal.")
-			break
-		}
-		logger.Info().Msg(fmt.Sprintf("WebSocket connection lost, retrying in %d seconds...", reconnectDelay))
-		time.Sleep(time.Duration(reconnectDelay) * time.Second)
-	}
-}
+	go func() {
+		reconnectDelay := 5 // seconds
+		for {
+			logger.Info().Msg("Starting MessageHandler and event loop...")
+			messageHandler.Start()
 
-// eventLoop returns true if process should exit (interrupt), false if should reconnect
-func eventLoop(interrupt chan os.Signal, uploadQueue *UploadQueue, watcher *Watcher, mh *MessageHandler) bool {
-	for {
-		select {
-		case <-mh.done:
-			logger.Info().Msg("WebSocket connection closed or failed, will attempt to reconnect.")
-			return false // signal to reconnect
-		case <-interrupt:
-			logger.Info().Msg("Received interrupt signal")
-			mh.Stop()
-			watcher.Stop()
-			uploadQueue.Stop()
-			return true // signal to exit
+			for range messageHandler.done {
+				logger.Info().Msg("WebSocket connection closed or failed, will attempt to reconnect.")
+				break
+			}
+			logger.Info().Msg(fmt.Sprintf("Retrying in %d seconds...", reconnectDelay))
+			time.Sleep(time.Duration(reconnectDelay) * time.Second)
 		}
-	}
+	}()
+
+	<-interrupt
+	logger.Info().Msg("Received interrupt signal")
+	messageHandler.Stop()
+	watcher.Stop()
+	uploadQueue.Stop()
 }
