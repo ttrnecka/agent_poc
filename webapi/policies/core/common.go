@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,7 +23,7 @@ func runCommand(client *ssh.Client, command string) ([]byte, error) {
 	}
 	defer session.Close()
 
-	log.Printf("Running command: %s", command)
+	logger.Info().Str("command", command).Msg("Running command")
 	out, err := session.CombinedOutput(command)
 	if err != nil {
 		return nil, err

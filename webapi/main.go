@@ -4,12 +4,20 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/api"
 	"github.com/ttrnecka/agent_poc/webapi/ws"
+
+	logging "github.com/ttrnecka/agent_poc/logger"
 )
 
+var logger zerolog.Logger
+
+func init() {
+	logger = logging.SetupLogger("webapi")
+}
+
 func main() {
-	setupLogger()
 
 	srv := &http.Server{
 		Addr:    ":8888",
@@ -18,7 +26,7 @@ func main() {
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		fmt.Println(err)
+		logger.Error().Err(err).Msg("")
 	}
 }
 

@@ -16,8 +16,6 @@ type Policy struct {
 }
 
 func PolicyApiHandler(w http.ResponseWriter, r *http.Request) {
-	p := r.URL.Path
-	fmt.Println(p)
 	fmt.Fprint(w, output("policies.json"))
 }
 

@@ -1,8 +1,6 @@
 package core
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -22,17 +20,17 @@ func (c Cmd) newValidateCmd() *cobra.Command {
 
 func (c *Cmd) validate(cmd *cobra.Command, args []string) error {
 
-	log.Printf("Validating probe %s version %s", c.Name, c.Version)
+	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Validating policy")
 
 	client, err := c.Runner.Connect()
 	if err != nil {
-		log.Printf("Validation failed: %v", err)
+		logger.Error().Err(err).Msg("Validation failed")
 		return err
 	}
 	defer client.Close()
 
 	if c.validator == nil {
-		log.Fatal("validator function not defined")
+		logger.Fatal().Msg("*validator* function is not defined")
 	}
 
 	go func() {
@@ -50,9 +48,9 @@ func (c *Cmd) validate(cmd *cobra.Command, args []string) error {
 		c.output <- out
 	}
 	if exErr.Code != 0 {
-		log.Printf("Validation failed with exit code %d\n", exErr.Code)
+		logger.Error().Int("exit_code", exErr.Code).Msg("Validation failed")
 		return exErr
 	}
-	log.Println("Validation completed successfully")
+	logger.Info().Msg("Validation completed successfully")
 	return nil
 }

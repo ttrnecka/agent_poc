@@ -26,6 +26,7 @@ services:
       - agent_poc_network
     volumes:
       - ./db:/data/db
+      - ./logs/webapi:/logs
   ingest_service:
     build:
       context: .
@@ -40,6 +41,7 @@ services:
     volumes:
       - ./uploads:/data
       - ./db:/data/db
+      - ./logs/angest:/logs
     command: ["-upload-dir=/data"]
   collector1:
     build:
@@ -67,6 +69,8 @@ services:
     command: ["--addr", "webapi:8888", "--source", "collector2","--ingest","ingest_service:8888"]
     depends_on:
       - webapi
+    volumes:
+      - ./logs/collector:/logs
   switch1:
     image: trnecka/mock_server:latest
     networks:

@@ -14,6 +14,7 @@ WORKDIR /app
 COPY go.work* .
 COPY collector collector
 COPY ingestion ingestion
+COPY logger logger
 COPY webapi webapi
 
 RUN go mod download

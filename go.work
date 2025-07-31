@@ -3,6 +3,7 @@ go 1.23.11
 use (
 	./collector
 	./ingestion
+	./logger
 	./webapi
 	./webapi/policies/brocade
 	./webapi/policies/core

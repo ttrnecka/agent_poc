@@ -1,8 +1,7 @@
 package main
 
 import (
-	"log"
-
+	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/policies/core"
 )
 
@@ -35,8 +34,11 @@ var commandsV103 []string = []string{
 	"license --show",
 }
 
+var logger zerolog.Logger
+
 func main() {
 	cmd := core.NewCmd(NAME, VERSION, DESCRIPTION, &core.SshRunner{})
+	logger = core.Logger()
 
 	validate := func() {
 		// all validation CMDs needs to have retrun code 0
@@ -68,7 +70,7 @@ func main() {
 		case "1.0.3":
 			commands = commandsV103
 		default:
-			log.Fatalf("unknown build %s", VERSION)
+			logger.Fatal().Str("version", VERSION).Msg("Unknown version")
 		}
 
 		for _, endp := range commands {

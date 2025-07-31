@@ -1,8 +1,6 @@
 package core
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -21,17 +19,17 @@ func (c Cmd) newCollectCmd() *cobra.Command {
 
 func (c *Cmd) collect(cmd *cobra.Command, args []string) error {
 
-	log.Printf("Collecting data for %s version %s", c.Name, c.Version)
+	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Collecting data for policy")
 
 	client, err := c.Runner.Connect()
 	if err != nil {
-		log.Printf("Collection failed: %v", err)
+		logger.Error().Err(err).Msg("Collection failed")
 		return err
 	}
 	defer client.Close()
 
 	if c.collector == nil {
-		log.Fatal("collector function not defined")
+		logger.Fatal().Msg("*collector* function is not defined")
 	}
 
 	go func() {
@@ -50,9 +48,9 @@ func (c *Cmd) collect(cmd *cobra.Command, args []string) error {
 		c.output <- out
 	}
 	if exErr.Code != 0 {
-		log.Printf("Collection failed with exit code %d\n", exErr.Code)
+		logger.Error().Int("exit_code", exErr.Code).Msg("Collection failed")
 		return exErr
 	}
-	log.Println("Collection completed successfully")
+	logger.Info().Msg("Collection completed successfully")
 	return nil
 }

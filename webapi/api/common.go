@@ -15,7 +15,7 @@ func output(file string) string {
 
 	b, err := os.ReadFile(cmd_file) // just pass the file name
 	if err != nil {
-		fmt.Print(err)
+		logger.Error().Err(err).Msg("")
 	}
 	return string(b)
 }

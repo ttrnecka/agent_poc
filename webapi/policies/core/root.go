@@ -3,14 +3,17 @@ package core
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	logging "github.com/ttrnecka/agent_poc/logger"
 	"golang.org/x/mod/semver"
 )
+
+var logger zerolog.Logger
 
 var done chan bool
 
@@ -25,7 +28,12 @@ type Cmd struct {
 	collector   func()
 }
 
+func Logger() zerolog.Logger {
+	return logger
+}
+
 func NewCmd(name, version, description string, runner Runner) *Cmd {
+	logger = logging.SetupLogger(name)
 	return &Cmd{
 		Name:        name,
 		Version:     version,
@@ -44,14 +52,14 @@ func Execute(cmd *Cmd) {
 	// endpoint flag
 	rootCmd.PersistentFlags().StringP("endpoint", "e", "", "host:port notation of the endpoint to connect to")
 	if err := rootCmd.MarkPersistentFlagRequired("endpoint"); err != nil {
-		log.Fatalf("Failed to mark flag required: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to mark flag required")
 	}
 	viper.BindPFlag("endpoint", rootCmd.PersistentFlags().Lookup("endpoint"))
 
 	// endpoint output_folder flag
 	rootCmd.PersistentFlags().StringP("output_folder", "o", "", "folder to store collected data")
 	if err := rootCmd.MarkPersistentFlagRequired("output_folder"); err != nil {
-		log.Fatalf("Failed to mark flag required: %v", err)
+		logger.Fatal().Err(err).Msg("Failed to mark flag required")
 	}
 	viper.BindPFlag("output_folder", rootCmd.PersistentFlags().Lookup("output_folder"))
 
@@ -111,17 +119,17 @@ func (c *Cmd) RegisterCollector(f func()) {
 
 func (c *Cmd) check() {
 	if c.Name == "" {
-		log.Fatal("Empty Cmd.Name was provided")
+		logger.Fatal().Msg("Empty Name was provided")
 	}
 	if !semver.IsValid(fmt.Sprintf("v%s", c.Version)) {
-		log.Fatalf("Cmd.Version %s does not follow Semantic Versioning format", c.Version)
+		logger.Fatal().Str("version", c.Version).Msg("Version does not follow Semantic Versioning format")
 	}
 }
 
 func (c *Cmd) initConfig() error {
-	log.Printf("Initializing configuration for %s version %s", c.Name, c.Version)
-	log.Print("Checking environment variables and flags")
-	log.Print("Checking if CLI_USER is set")
+	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Initializing configuration")
+	logger.Info().Msg("Checking environment variables and flags")
+	logger.Info().Msg("Checking if CLI_USER is set")
 	err := viper.BindEnv("user", "CLI_USER")
 
 	if err != nil {
@@ -131,9 +139,9 @@ func (c *Cmd) initConfig() error {
 	if viper.GetString("user") == "" {
 		return fmt.Errorf("CLI_USER environment variable is required but not set")
 	}
-	log.Printf("Using user: %s", viper.GetString("user"))
+	logger.Info().Str("user", viper.GetString("user")).Msg("Using user")
 
-	log.Print("Checking if CLI_PASSWORD is set")
+	logger.Info().Msg("Checking if CLI_PASSWORD is set")
 	err = viper.BindEnv("password", "CLI_PASSWORD")
 
 	if err != nil {
@@ -143,7 +151,7 @@ func (c *Cmd) initConfig() error {
 	if viper.GetString("password") == "" {
 		return fmt.Errorf("CLI_PASSWORD environment variable is required but not set")
 	}
-	log.Printf("Password is set")
+	logger.Info().Msg("Password is set")
 
 	err = checkFolder(viper.GetString("output_folder"))
 	if err != nil {
@@ -154,7 +162,7 @@ func (c *Cmd) initConfig() error {
 	if err != nil {
 		return fmt.Errorf("failed to check working directory: %w", err)
 	}
-	log.Printf("Output folder is set to: %s", filepath.Join(wd, viper.GetString("output_folder")))
+	logger.Info().Str("output_folder", filepath.Join(wd, viper.GetString("output_folder"))).Msg("Output folder is set")
 
 	return nil
 }
