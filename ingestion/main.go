@@ -17,7 +17,7 @@ var uploadDir string
 var logger zerolog.Logger
 
 func init() {
-	logger = logging.SetupLogger("webapi")
+	logger = logging.SetupLogger("ingesting_service")
 }
 
 func main() {
