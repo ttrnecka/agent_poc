@@ -7,6 +7,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/rs/zerolog"
+	logging "github.com/ttrnecka/agent_poc/logger"
 )
 
 var addr = flag.String("addr", "localhost:8888", "http service address")
@@ -15,10 +18,14 @@ var source = flag.String("source", "collector1", "name of collector")
 var watchPath = flag.String("out", "/data/out", "core folder where collectors move files saved by plugin for sending")
 var tmpPath = flag.String("tmp", "/data/tmp", "root folder where collector instructs plugin to store data")
 
+var logger zerolog.Logger
+
+func init() {
+	logger = logging.SetupLogger("collector")
+}
+
 func main() {
 	flag.Parse()
-
-	setupLogger()
 
 	if err := os.MkdirAll(*tmpPath, 0755); err != nil {
 		logger.Fatal().Err(fmt.Errorf("failed to create directory: %w", err)).Msg("")

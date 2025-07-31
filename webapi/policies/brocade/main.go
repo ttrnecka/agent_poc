@@ -52,8 +52,6 @@ func main() {
 			cmd.ReadResult()
 			// here you can read result and do parsing if needed
 			// no need to save anything, the core.Cmd already does the job
-			// o := cmd.ReadResult()
-			// fmt.Printf("Collector sent result for %s:\n%s", endp, o)
 		}
 	}
 
@@ -79,8 +77,6 @@ func main() {
 			cmd.ReadResult()
 			// here you can read result and do parsing if needed
 			// no need to save anything, the core.Cmd already does the job
-			// o := cmd.ReadResult()
-			// fmt.Printf("Collector sent result for %s:\n%s", endp, o)
 		}
 	}
 

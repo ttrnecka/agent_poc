@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,7 +29,7 @@ func isHeaderLine(line string) bool {
 func (d Pipeline) parseFile(file_path string) (headers map[string]string, body string, err error) {
 	file, err := os.Open(file_path)
 	if err != nil {
-		log.Printf("Cannot open file %s: %s", file_path, err)
+		logger.Error().Err(err).Msgf("Cannot open file %s: %s", file_path, err)
 		return
 	}
 	defer file.Close()
@@ -61,7 +60,7 @@ func (d Pipeline) parseFile(file_path string) (headers map[string]string, body s
 	}
 
 	if err = scanner.Err(); err != nil {
-		log.Printf("Error reading file: %s", err)
+		logger.Error().Err(err).Msg("Error reading file")
 		return
 	}
 	body = bodyBuilder.String()
@@ -78,14 +77,14 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 
 	if collector == "" || device == "" || endpoint == "" {
 		err := fmt.Errorf("missing required headers: collector, device, probe_id, or endpoint")
-		log.Printf("Parsing error: %s", err)
+		logger.Error().Err(err).Msg("Parsing error")
 		return err
 	}
 
 	dirPath := filepath.Join(db_path, collector, device)
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		err = fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-		log.Print(err)
+		logger.Error().Err(err).Msg("")
 		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
 	}
 
@@ -93,7 +92,7 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 	filePath := filepath.Join(dirPath, endpoint)
 	if err := os.WriteFile(filePath, []byte(body), 0644); err != nil {
 		err = fmt.Errorf("failed to write body to file: %w", err)
-		log.Print(err)
+		logger.Error().Err(err).Msg("")
 		return err
 	}
 	return nil

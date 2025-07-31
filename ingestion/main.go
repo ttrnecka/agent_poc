@@ -2,16 +2,23 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/rs/zerolog"
+	logging "github.com/ttrnecka/agent_poc/logger"
 )
 
 var uploadDir string
+
+var logger zerolog.Logger
+
+func init() {
+	logger = logging.SetupLogger("webapi")
+}
 
 func main() {
 	// Parse CLI flag
@@ -21,7 +28,7 @@ func main() {
 	// Ensure the upload directory exists
 	err := os.MkdirAll(uploadDir, 0755)
 	if err != nil {
-		log.Fatalf("Failed to create upload dir: %v", err)
+		logger.Fatal().Err(err).Str("upload-dir", uploadDir).Msg("Failed to create upload dir")
 	}
 
 	srv := &http.Server{
@@ -29,10 +36,10 @@ func main() {
 		Handler: router(),
 	}
 
-	log.Println("Starting ingestion service")
+	logger.Info().Msg("Starting ingestion service")
 	err = srv.ListenAndServe()
 	if err != nil {
-		fmt.Println(err)
+		logger.Fatal().Err(err).Msg("Failed to start ingestion service")
 	}
 }
 
@@ -68,10 +75,10 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	outPath := filepath.Join(uploadDir, safeName)
-	log.Printf("Creating file %s", outPath)
+	logger.Info().Msgf("Creating file %s", outPath)
 	outFile, err := os.Create(outPath)
 	if err != nil {
-		log.Printf("Failed to create file: %v", err)
+		logger.Error().Err(err).Msg("Failed to save file")
 		http.Error(w, "Failed to save file", http.StatusInternalServerError)
 		return
 	}
@@ -79,14 +86,14 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	_, err = io.Copy(outFile, r.Body)
 	if err != nil {
-		log.Printf("Failed to write file: %v", err)
+		logger.Error().Err(err).Msg("Failed to write file")
 		http.Error(w, "Failed to write file", http.StatusInternalServerError)
 		return
 	}
 
 	go Pipeline{}.Process(outPath)
 
-	log.Printf("Received file: %s -> %s", fileName, outPath)
+	logger.Info().Msgf("Received file: %s -> %s", fileName, outPath)
 	w.WriteHeader(http.StatusOK)
 }
 

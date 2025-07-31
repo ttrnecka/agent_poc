@@ -41,7 +41,7 @@ services:
     volumes:
       - ./uploads:/data
       - ./db:/data/db
-      - ./logs/angest:/logs
+      - ./logs/ingest:/logs
     command: ["-upload-dir=/data"]
   collector1:
     build:
