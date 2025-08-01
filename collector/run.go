@@ -210,12 +210,14 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 			logger.Error().Err(err).Str("file", srcPath).Msg("Failed to read file")
 		}
 
+		policy, version := splitLast(policy)
 		// Prepend namePrefix
 		modifiedContent := []byte(
 			"---collector:\t" + collector + "\n" +
 				"---probe_id:\t" + probeId + "\n" +
 				"---collection_id:\t" + uUID + "\n" +
 				"---policy:\t" + policy + "\n" +
+				"---version:\t" + version + "\n" +
 				"---timestamp:\t" + timestamp + "\n" +
 				"---device:\t" + stripAfterLast(device, ":") + "\n" +
 				"---endpoint:\t" + stripAfterLast(endpoint, ".") + "\n" +
@@ -243,4 +245,14 @@ func stripAfterLast(s, subs string) string {
 		return s[:idx]
 	}
 	return s
+}
+
+func splitLast(s string) (string, string) {
+	parts := strings.Split(s, "_")
+	if len(parts) <= 1 {
+		return "", s // No underscore or only one part
+	}
+	first := strings.Join(parts[:len(parts)-1], "_")
+	last := parts[len(parts)-1]
+	return first, last
 }

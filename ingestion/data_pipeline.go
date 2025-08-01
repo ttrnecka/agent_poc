@@ -2,13 +2,19 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/rs/zerolog"
+	"github.com/ttrnecka/agent_poc/ingestion/parsers"
 )
+
+var mu sync.Mutex
 
 type Pipeline struct {
 	logger zerolog.Logger
@@ -21,7 +27,7 @@ func (p Pipeline) Process(file_path string) {
 		Logger()
 
 	success := true
-	go func() {
+	defer func() {
 		p.PostProcess(file_path, success)
 	}()
 
@@ -32,6 +38,7 @@ func (p Pipeline) Process(file_path string) {
 		p.logger.Error().Err(err).Msg("Cannot parse file")
 		return
 	}
+	p.logger.Info().Msg("File headers and body read successfully")
 
 	err = p.saveToDb(headers, body)
 	if err != nil {
@@ -39,6 +46,7 @@ func (p Pipeline) Process(file_path string) {
 		p.logger.Error().Err(err).Msg("Cannot save file to DB")
 		return
 	}
+	p.logger.Info().Msg("File processed and saved to DB")
 }
 
 func isHeaderLine(line string) bool {
@@ -94,9 +102,10 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 	collector := headers["collector"]
 	device := headers["device"]
 	endpoint := headers["endpoint"]
+	policy := headers["policy"]
 
-	if collector == "" || device == "" || endpoint == "" {
-		err := fmt.Errorf("missing required headers: collector, device, probe_id, or endpoint")
+	if collector == "" || device == "" || endpoint == "" || policy == "" {
+		err := fmt.Errorf("missing required headers: collector, device, policy, or endpoint")
 		return err
 	}
 
@@ -112,7 +121,66 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 		err = fmt.Errorf("failed to write body to file: %w", err)
 		return err
 	}
+
+	p.logger.Info().Msgf("Parsing body using policy %s", policy)
+	parsed_json, err := p.parseBody(body, policy, endpoint)
+	if err != nil {
+		err = fmt.Errorf("failed to parse body: %w", err)
+		return err
+	}
+
+	existingData := map[string]any{}
+	filePath = filepath.Join(dirPath, "object")
+
+	mu.Lock()
+	defer mu.Unlock()
+	err = readExistingJson(filePath, existingData)
+	if err != nil {
+		err = fmt.Errorf("failed to read existing object: %w", err)
+		return err
+	}
+
+	merged := mergeMaps(existingData, parsed_json)
+
+	err = saveJson(filePath, merged)
+	if err != nil {
+		err = fmt.Errorf("failed to save json object: %w", err)
+		return err
+	}
+
 	return nil
+}
+
+func (p Pipeline) parseBody(body, policy, endpoint string) (map[string]any, error) {
+	result := make(map[string]any)
+
+	if parsers.Parsers[policy] == nil {
+		err := fmt.Errorf("no parser found for %s policy", policy)
+		return nil, err
+	}
+
+	if parsers.Parsers[policy].Extractors[endpoint] == nil {
+		err := fmt.Errorf("no parser found for %s policy, endpoint %s", policy, endpoint)
+		return nil, err
+	}
+
+	for key, extractor := range parsers.Parsers[policy].Extractors[endpoint] {
+		fn, ok := parsers.Extractors[extractor.Method]
+		if !ok {
+			err := fmt.Errorf("no extractor for method %q", extractor.Method)
+			return nil, err
+		}
+		val, err := fn(body, extractor)
+		if err != nil {
+			err := fmt.Errorf("error extracting %q: %v", key, err)
+			return nil, err
+		}
+		if val != nil {
+			result[key] = val
+		}
+	}
+
+	return result, nil
 }
 
 func (p Pipeline) PostProcess(srcPath string, success bool) {
@@ -136,4 +204,47 @@ func (p Pipeline) PostProcess(srcPath string, success bool) {
 		return
 	}
 	p.logger.Info().Msgf("Move succeeded")
+}
+
+// Merge two map[string]any, new overrides old
+func mergeMaps(dst, src map[string]any) map[string]any {
+	for k, v := range src {
+		if vMap, ok := v.(map[string]any); ok {
+			if dvMap, ok := dst[k].(map[string]any); ok {
+				dst[k] = mergeMaps(dvMap, vMap)
+			} else {
+				dst[k] = vMap
+			}
+		} else {
+			dst[k] = v
+		}
+	}
+	return dst
+}
+
+func readExistingJson(filePath string, data map[string]any) error {
+	if file, err := os.Open(filePath); err == nil {
+		defer file.Close()
+		byteValue, _ := io.ReadAll(file)
+		json.Unmarshal(byteValue, &data)
+	} else if !os.IsNotExist(err) {
+		err = fmt.Errorf("error opening json file: %w", err)
+		return err
+	}
+	return nil
+}
+
+func saveJson(filePath string, data map[string]any) error {
+	out, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		err = fmt.Errorf("cannot marschal json: %w", err)
+		return err
+	}
+
+	// Save body to file
+	if err := os.WriteFile(filePath, out, 0644); err != nil {
+		err = fmt.Errorf("failed to write parsed json to file: %w", err)
+		return err
+	}
+	return nil
 }

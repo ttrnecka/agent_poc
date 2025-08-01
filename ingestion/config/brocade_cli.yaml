@@ -1,0 +1,28 @@
+extractors:
+  version:
+    fabric_os:
+      method: match_group
+      pattern: "(?m)^Fabric OS:\\s*(.+)$"
+    kernel:
+      method: match_group
+      pattern: "(?m)^Kernel:\\s*(.+)$"
+  switchshow:
+    name:
+      method: match_group
+      pattern: "(?m)^switchName:\\s*(.+)$"
+    mode:
+      method: match_group
+      pattern: "(?m)^switchMode:\\s*(.+)$"
+    role:
+      method: match_group
+      pattern: "(?m)^switchRole:\\s*(.+)$"
+  fabricshow:
+    fabric_name:
+      method: match_group
+      pattern: "(?m)^Fabric Name:\\s*(.+)$"
+  # age:
+  #   method: match_group
+  #   pattern: "(?m)^Age:\\s*(\\d+)$"
+  # metadata:
+  #   method: parse_json
+  #   path: "$.info.meta"  # path is optional, used by JSON extractor

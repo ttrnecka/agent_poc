@@ -1,4 +1,4 @@
-module github.com/ttrnecka/agent_poc/ingestion_server
+module github.com/ttrnecka/agent_poc/ingestion
 
 go 1.23.11
 

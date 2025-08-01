@@ -24,4 +24,5 @@ RUN go build -o /ingest_service ./ingestion
 FROM alpine
 WORKDIR /
 COPY --from=build /ingest_service /ingest_service
+COPY ingestion/config /config
 ENTRYPOINT ["/ingest_service"]

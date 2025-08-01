@@ -41,6 +41,7 @@ services:
     volumes:
       - ./data:/data
       - ./logs/ingest:/logs
+      - ./ingestion/config/:/config
     command: ["-upload-dir=/data"]
   collector1:
     build:

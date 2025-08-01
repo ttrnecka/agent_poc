@@ -24,9 +24,9 @@ type Config struct {
 func init() {
 	logger = logging.SetupLogger("ingesting_service")
 	config = Config{
-		uploadDir:    "/data/uploads",
-		processedDir: "/data/processed",
-		failedDir:    "/data/failed",
+		uploadDir:    "./data/uploads",
+		processedDir: "./data/processed",
+		failedDir:    "./data/failed",
 	}
 }
 
