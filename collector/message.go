@@ -48,6 +48,11 @@ func (m *MessageHandler) Start() {
 	err := m.connectWebSocket()
 	if err != nil {
 		logger.Error().Err(err).Msg("Error opening websocket")
+	} else {
+		err = m.sendHeartbeat()
+		if err != nil {
+			logger.Error().Err(err).Msg("Failed to send heartbeat message")
+		}
 	}
 	go m.readLoop()
 	go m.processLoop()
@@ -99,7 +104,7 @@ func (m *MessageHandler) processLoop() {
 	for {
 		select {
 		case <-m.ticker.C:
-			if m.c != nil {
+			if m.c == nil {
 				continue
 			}
 			err := m.sendHeartbeat()
