@@ -28,8 +28,6 @@ services:
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_webapi:0.0.1
-    ports:
-      - "8888:8888"
     networks:
       - agent_poc_network
     volumes:
@@ -42,8 +40,6 @@ services:
       args:
         IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_ings:0.0.1
-    ports:
-      - "8889:8888"
     networks:
       - agent_poc_network
     volumes:
@@ -84,14 +80,10 @@ services:
     networks:
       - agent_poc_network
     command: ["run","-m", "brocade_switch","-p", "2222"]
-    ports:
-      - "2222:2222"
   switch2:
     image: trnecka/mock_server:latest
     networks:
       - agent_poc_network
     command: ["run","-m", "brocade_switch_9","-p", "2222"]
-    ports:
-      - "2223:2222"
 networks:
   agent_poc_network: {}
