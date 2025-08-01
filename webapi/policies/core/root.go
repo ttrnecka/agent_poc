@@ -122,12 +122,12 @@ func (c *Cmd) check() {
 		logger.Fatal().Msg("Empty Name was provided")
 	}
 	if !semver.IsValid(fmt.Sprintf("v%s", c.Version)) {
-		logger.Fatal().Str("version", c.Version).Msg("Version does not follow Semantic Versioning format")
+		logger.Fatal().Msgf("Version does not follow Semantic Versioning format: %s", c.Version)
 	}
 }
 
 func (c *Cmd) initConfig() error {
-	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Initializing configuration")
+	logger.Info().Msgf("Initializing configuration for policy %s, version %s", c.Name, c.Version)
 	logger.Info().Msg("Checking environment variables and flags")
 	logger.Info().Msg("Checking if CLI_USER is set")
 	err := viper.BindEnv("user", "CLI_USER")
@@ -139,7 +139,7 @@ func (c *Cmd) initConfig() error {
 	if viper.GetString("user") == "" {
 		return fmt.Errorf("CLI_USER environment variable is required but not set")
 	}
-	logger.Info().Str("user", viper.GetString("user")).Msg("Using user")
+	logger.Info().Msgf("Using user %s", viper.GetString("user"))
 
 	logger.Info().Msg("Checking if CLI_PASSWORD is set")
 	err = viper.BindEnv("password", "CLI_PASSWORD")
@@ -162,7 +162,7 @@ func (c *Cmd) initConfig() error {
 	if err != nil {
 		return fmt.Errorf("failed to check working directory: %w", err)
 	}
-	logger.Info().Str("output_folder", filepath.Join(wd, viper.GetString("output_folder"))).Msg("Output folder is set")
+	logger.Info().Msgf("Output folder is set to %s", filepath.Join(wd, viper.GetString("output_folder")))
 
 	return nil
 }

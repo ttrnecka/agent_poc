@@ -43,7 +43,7 @@ func DefaultConfig() Config {
 	}
 }
 func SetupLogger(name string) zerolog.Logger {
-
+	os.Setenv("NO_COLOR", "true")
 	val, ok := loggers[name]
 	if ok {
 		return val

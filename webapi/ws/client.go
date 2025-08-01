@@ -67,7 +67,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 func setupPongHandler(conn *websocket.Conn) {
 	remoteAddr := conn.RemoteAddr().String()
 	conn.SetPongHandler(func(appData string) error {
-		logger.Debug().Str("cliet", remoteAddr).Str("raw", appData).Msg("Received pong from client")
+		logger.Debug().Str("client", remoteAddr).Msg("Received pong from client")
 		conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})

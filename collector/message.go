@@ -99,6 +99,9 @@ func (m *MessageHandler) processLoop() {
 	for {
 		select {
 		case <-m.ticker.C:
+			if m.c != nil {
+				continue
+			}
 			err := m.sendHeartbeat()
 			if err != nil {
 				logger.Error().Err(err).Msg("Failed to send heartbeat message")

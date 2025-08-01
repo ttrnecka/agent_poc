@@ -39,17 +39,17 @@ func (s *SshRunner) Run(cmd string) ([]byte, *ExitCodeError) {
 	out, err := runCommand(s.client, cmd)
 	if err != nil {
 		exErr.Err = err
-		logger.Error().Err(err).Str("command", cmd).Msg("Error running command")
+		logger.Error().Err(err).Msgf("Error running command: %s", cmd)
 		if exitErr, ok := err.(*ssh.ExitError); ok {
 			exErr.Code = exitErr.ExitStatus()
 		} else {
 			exErr.Code = 255
 		}
 	}
-	logger.Debug().Str("output", string(out)).Msg("Command output")
+	logger.Debug().Msgf("Command output: %s", string(out))
 
 	filename := generateFilename(cmd)
-	logger.Info().Str("file", filename).Msg("Saving output to file")
+	logger.Info().Msgf("Saving output to file %s", filename)
 	err = saveFile(viper.GetString("output_folder"), filename, out)
 	if err != nil {
 		logger.Error().Err(err).Msg("Validation failed")
@@ -66,12 +66,12 @@ func connectToHost() (*ssh.Client, error) {
 	}
 	sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
 
-	logger.Info().Str("host", viper.GetString("endpoint")).Msg("Connecting to host")
+	logger.Info().Msgf("Connecting to host %s", viper.GetString("endpoint"))
 
 	client, err := ssh.Dial("tcp", viper.GetString("endpoint"), sshConfig)
 	if err != nil {
 		return nil, err
 	}
-	logger.Info().Str("host", viper.GetString("endpoint")).Msg("Connected to host")
+	logger.Info().Msgf("Connected to host %s", viper.GetString("endpoint"))
 	return client, nil
 }

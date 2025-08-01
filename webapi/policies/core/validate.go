@@ -20,7 +20,7 @@ func (c Cmd) newValidateCmd() *cobra.Command {
 
 func (c *Cmd) validate(cmd *cobra.Command, args []string) error {
 
-	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Validating policy")
+	logger.Info().Msgf("Validating policy %s, version %s", c.Name, c.Version)
 
 	client, err := c.Runner.Connect()
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *Cmd) validate(cmd *cobra.Command, args []string) error {
 		c.output <- out
 	}
 	if exErr.Code != 0 {
-		logger.Error().Int("exit_code", exErr.Code).Msg("Validation failed")
+		logger.Error().Msgf("Validation failed, exit code: %d", exErr.Code)
 		return exErr
 	}
 	logger.Info().Msg("Validation completed successfully")

@@ -19,7 +19,7 @@ func (c Cmd) newCollectCmd() *cobra.Command {
 
 func (c *Cmd) collect(cmd *cobra.Command, args []string) error {
 
-	logger.Info().Str("policy", c.Name).Str("version", c.Version).Msg("Collecting data for policy")
+	logger.Info().Msgf("Collecting data for policy %s, version %s", c.Name, c.Version)
 
 	client, err := c.Runner.Connect()
 	if err != nil {
@@ -48,7 +48,7 @@ func (c *Cmd) collect(cmd *cobra.Command, args []string) error {
 		c.output <- out
 	}
 	if exErr.Code != 0 {
-		logger.Error().Int("exit_code", exErr.Code).Msg("Collection failed")
+		logger.Error().Msgf("Collection failed, exit code: %d", exErr.Code)
 		return exErr
 	}
 	logger.Info().Msg("Collection completed successfully")

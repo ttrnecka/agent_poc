@@ -68,7 +68,7 @@ func main() {
 		case "1.0.3":
 			commands = commandsV103
 		default:
-			logger.Fatal().Str("version", VERSION).Msg("Unknown version")
+			logger.Fatal().Msgf("Unknown version %s", VERSION)
 		}
 
 		for _, endp := range commands {

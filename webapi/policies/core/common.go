@@ -23,7 +23,7 @@ func runCommand(client *ssh.Client, command string) ([]byte, error) {
 	}
 	defer session.Close()
 
-	logger.Info().Str("command", command).Msg("Running command")
+	logger.Info().Msgf("Running command: %s", command)
 	out, err := session.CombinedOutput(command)
 	if err != nil {
 		return nil, err
