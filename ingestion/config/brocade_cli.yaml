@@ -16,10 +16,16 @@ extractors:
     role:
       method: match_group
       pattern: "(?m)^switchRole:\\s*(.+)$"
+    ports:
+      method: match_group_all
+      pattern: "(?m)^\\s*(?P<index>\\d+)\\s*(?P<slot>\\d+)\\s*(?P<port>\\d+)\\s*(?P<address>[\\d|-]+)\\s*(?P<media>\\S+)\\s*(?P<speed>\\S+)\\s*(?P<state>\\S+)\\s*(?P<protocol>\\S+)\\s*(?P<description>.*)$"
   fabricshow:
     fabric_name:
       method: match_group
       pattern: "(?m)^Fabric Name:\\s*(.+)$"
+    fabric:
+      method: match_group_all
+      pattern: "(?m)^\\s*(?P<switch_domain>\\d+):\\s+(?P<switch_port_did>\\S+)\\s+(?P<switch_wwn>\\S+)\\s+(?P<switch_ip_addr>\\S+)\\s+(?P<switch_fc_ip_addr>\\S+)\\s+>?\\\"(?P<switch_name>[^\\\"]+)\\\"$"
   # age:
   #   method: match_group
   #   pattern: "(?m)^Age:\\s*(\\d+)$"

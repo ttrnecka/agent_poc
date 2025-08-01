@@ -2,18 +2,61 @@ package parsers
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"regexp"
 )
 
 // match parser parses the input line and returns parsed value if match found
 
 func MatchGroup(input string, cfg ExtractorConfig) (any, error) {
+	if cfg.Pattern == "" {
+		return nil, errors.New("missing regex pattern")
+	}
+
 	re := regexp.MustCompile(cfg.Pattern)
 	match := re.FindStringSubmatch(input)
 	if len(match) > 1 {
 		return match[1], nil // return as string
 	}
 	return nil, nil
+}
+
+func MatchNamedGroupsAll(input string, cfg ExtractorConfig) (any, error) {
+	if cfg.Pattern == "" {
+		return nil, errors.New("missing regex pattern")
+	}
+
+	fmt.Printf("Patters is %s\n", cfg.Pattern)
+
+	fmt.Printf("Input is %s\n", input)
+
+	re := regexp.MustCompile(cfg.Pattern)
+	names := re.SubexpNames()
+	matches := re.FindAllStringSubmatch(input, -1)
+
+	var result []map[string]any
+
+	fmt.Printf("Matches:  %+v\n", matches)
+	for _, match := range matches {
+		entry := make(map[string]any)
+		for i, val := range match {
+			if i == 0 {
+				continue // skip the full match
+			}
+			if names[i] != "" {
+				entry[names[i]] = val
+			}
+		}
+		if len(entry) > 0 {
+			result = append(result, entry)
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, nil
+	}
+	return result, nil
 }
 
 func ParseJSON(input string, cfg ExtractorConfig) (any, error) {

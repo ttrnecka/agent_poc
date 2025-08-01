@@ -28,8 +28,9 @@ type Endpoint struct {
 }
 
 var Extractors = map[string]ExtractFunc{
-	"match_group": MatchGroup,
-	"parse_json":  ParseJSON,
+	"match_group":     MatchGroup,
+	"match_group_all": MatchNamedGroupsAll,
+	"parse_json":      ParseJSON,
 }
 
 func GetCurrentDir() string {
