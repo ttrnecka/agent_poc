@@ -25,7 +25,7 @@ services:
     networks:
       - agent_poc_network
     volumes:
-      - ./db:/data/db
+      - ./data/db:/data/db
       - ./logs/webapi:/logs
   ingest_service:
     build:
@@ -39,8 +39,7 @@ services:
     networks:
       - agent_poc_network
     volumes:
-      - ./uploads:/data
-      - ./db:/data/db
+      - ./data:/data
       - ./logs/ingest:/logs
     command: ["-upload-dir=/data"]
   collector1:

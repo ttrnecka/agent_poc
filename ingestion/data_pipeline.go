@@ -6,19 +6,39 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/rs/zerolog"
 )
 
-type Pipeline struct{}
+type Pipeline struct {
+	logger zerolog.Logger
+}
 
-func (p Pipeline) Process(file_path string) error {
+func (p Pipeline) Process(file_path string) {
 
+	p.logger = logger.With().
+		Str("file_path", file_path).
+		Logger()
+
+	success := true
+	go func() {
+		p.PostProcess(file_path, success)
+	}()
+
+	p.logger.Info().Msgf("Data Pipeline process started for %s", file_path)
 	headers, body, err := p.parseFile(file_path)
 	if err != nil {
-		return err
+		success = false
+		p.logger.Error().Err(err).Msg("Cannot parse file")
+		return
 	}
 
 	err = p.saveToDb(headers, body)
-	return err
+	if err != nil {
+		success = false
+		p.logger.Error().Err(err).Msg("Cannot save file to DB")
+		return
+	}
 }
 
 func isHeaderLine(line string) bool {
@@ -77,14 +97,12 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 
 	if collector == "" || device == "" || endpoint == "" {
 		err := fmt.Errorf("missing required headers: collector, device, probe_id, or endpoint")
-		logger.Error().Err(err).Msg("Parsing error")
 		return err
 	}
 
 	dirPath := filepath.Join(db_path, collector, device)
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		err = fmt.Errorf("failed to create directory %s: %w", dirPath, err)
-		logger.Error().Err(err).Msg("")
 		return fmt.Errorf("failed to create directory %s: %w", dirPath, err)
 	}
 
@@ -92,8 +110,30 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 	filePath := filepath.Join(dirPath, endpoint)
 	if err := os.WriteFile(filePath, []byte(body), 0644); err != nil {
 		err = fmt.Errorf("failed to write body to file: %w", err)
-		logger.Error().Err(err).Msg("")
 		return err
 	}
 	return nil
+}
+
+func (p Pipeline) PostProcess(srcPath string, success bool) {
+
+	destDir := config.processedDir
+	msg := "Data Pipeline process finished succesfully."
+	if !success {
+		destDir = config.failedDir
+		msg = "Data Pipeline process failed."
+	}
+	msg = fmt.Sprintf("%s Moving file to %s", msg, destDir)
+	p.logger.Info().Msg(msg)
+
+	fileName := filepath.Base(srcPath)
+
+	destPath := filepath.Join(destDir, fileName)
+
+	err := os.Rename(srcPath, destPath)
+	if err != nil {
+		p.logger.Error().Err(err).Msg("Move failed")
+		return
+	}
+	p.logger.Info().Msgf("Move succeeded")
 }

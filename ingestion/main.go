@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"io"
 	"net/http"
 	"os"
@@ -12,23 +11,33 @@ import (
 	logging "github.com/ttrnecka/agent_poc/logger"
 )
 
-var uploadDir string
-
 var logger zerolog.Logger
+
+var config Config
+
+type Config struct {
+	uploadDir    string
+	processedDir string
+	failedDir    string
+}
 
 func init() {
 	logger = logging.SetupLogger("ingesting_service")
+	config = Config{
+		uploadDir:    "/data/uploads",
+		processedDir: "/data/processed",
+		failedDir:    "/data/failed",
+	}
 }
 
 func main() {
-	// Parse CLI flag
-	flag.StringVar(&uploadDir, "upload-dir", "/data/uploads", "Directory to save uploaded files")
-	flag.Parse()
 
-	// Ensure the upload directory exists
-	err := os.MkdirAll(uploadDir, 0755)
-	if err != nil {
-		logger.Fatal().Err(err).Str("upload-dir", uploadDir).Msg("Failed to create upload dir")
+	// Ensure the directories exist
+	for _, dir := range []string{config.uploadDir, config.processedDir, config.failedDir} {
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			logger.Fatal().Err(err).Msgf("Failed to create directory %s", dir)
+		}
 	}
 
 	srv := &http.Server{
@@ -37,7 +46,7 @@ func main() {
 	}
 
 	logger.Info().Msg("Starting ingestion service")
-	err = srv.ListenAndServe()
+	err := srv.ListenAndServe()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to start ingestion service")
 	}
@@ -74,7 +83,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	outPath := filepath.Join(uploadDir, safeName)
+	outPath := filepath.Join(config.uploadDir, safeName)
 	logger.Info().Msgf("Creating file %s", outPath)
 	outFile, err := os.Create(outPath)
 	if err != nil {
