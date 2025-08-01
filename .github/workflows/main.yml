@@ -20,7 +20,6 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            set -euxo pipefail
             cd /xapoc
             git pull
             sudo docker compose build
