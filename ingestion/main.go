@@ -15,6 +15,8 @@ var logger zerolog.Logger
 
 var config Config
 
+var lockManager *LockManager
+
 type Config struct {
 	uploadDir    string
 	processedDir string
@@ -28,6 +30,7 @@ func init() {
 		processedDir: "./data/processed",
 		failedDir:    "./data/failed",
 	}
+	lockManager = NewLockManager()
 }
 
 func main() {

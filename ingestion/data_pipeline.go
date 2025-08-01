@@ -132,8 +132,13 @@ func (p Pipeline) saveToDb(headers map[string]string, body string) error {
 	existingData := map[string]any{}
 	filePath = filepath.Join(dirPath, "object")
 
-	mu.Lock()
-	defer mu.Unlock()
+	lockManager.Lock(filePath)
+	p.logger.Info().Msgf("Lock acquired on %s", filePath)
+	defer func() {
+		lockManager.Unlock(filePath)
+		p.logger.Info().Msgf("Lock released on %s", filePath)
+	}()
+
 	err = readExistingJson(filePath, existingData)
 	if err != nil {
 		err = fmt.Errorf("failed to read existing object: %w", err)

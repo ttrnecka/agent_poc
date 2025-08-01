@@ -3,7 +3,6 @@ package parsers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"regexp"
 )
 
@@ -27,17 +26,12 @@ func MatchNamedGroupsAll(input string, cfg ExtractorConfig) (any, error) {
 		return nil, errors.New("missing regex pattern")
 	}
 
-	fmt.Printf("Patters is %s\n", cfg.Pattern)
-
-	fmt.Printf("Input is %s\n", input)
-
 	re := regexp.MustCompile(cfg.Pattern)
 	names := re.SubexpNames()
 	matches := re.FindAllStringSubmatch(input, -1)
 
 	var result []map[string]any
 
-	fmt.Printf("Matches:  %+v\n", matches)
 	for _, match := range matches {
 		entry := make(map[string]any)
 		for i, val := range match {
