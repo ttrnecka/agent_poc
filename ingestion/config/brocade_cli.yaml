@@ -26,6 +26,13 @@ extractors:
     fabric:
       method: match_group_all
       pattern: "(?m)^\\s*(?P<switch_domain>\\d+):\\s+(?P<switch_port_did>\\S+)\\s+(?P<switch_wwn>\\S+)\\s+(?P<switch_ip_addr>\\S+)\\s+(?P<switch_fc_ip_addr>\\S+)\\s+>?\\\"(?P<switch_name>[^\\\"]+)\\\"$"
+  licenseshow:
+    license:
+      method: match_group
+      pattern: "(?s)^\\s*(.*?)\\s*$"
+    license2:
+      method: match_group_all
+      pattern: "(?m)^(?P<hash>[A-Za-z0-9]+):\n(?P<code>(?:    .+\n?)+)$"
   # age:
   #   method: match_group
   #   pattern: "(?m)^Age:\\s*(\\d+)$"
