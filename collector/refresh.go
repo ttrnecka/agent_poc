@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -22,18 +24,44 @@ func refresh() error {
 	refreshMU.Lock()
 	defer refreshMU.Unlock()
 
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		logger.Error().Err(err).Msg("")
+		return err
+	}
+	client := &http.Client{
+		Jar: jar,
+	}
+
+	form := url.Values{}
+	form.Set("username", "test")
+	form.Set("password", "test")
+
+	resp, err := client.PostForm(fmt.Sprintf("http://%s/login", *addr), form)
+	if err != nil {
+		logger.Error().Err(err).Msg("")
+		return err
+	}
+	resp.Body.Close()
+
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
 	logger.Info().Msg("Refreshing probes")
 
-	res, err := http.Get(requestURL)
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	resp2, err := client.Do(req)
 	if err != nil {
 		logger.Error().Err(err).Msg("Probe refresh failure")
 		return err
 	}
-	defer res.Body.Close()
+	defer resp2.Body.Close()
 
 	var probes []api.Probe
-	err = json.NewDecoder(res.Body).Decode(&probes)
+	err = json.NewDecoder(resp2.Body).Decode(&probes)
 	if err != nil {
 		logger.Error().Err(err).Msg("Probe body read failure")
 		return err
@@ -69,7 +97,7 @@ func refresh() error {
 			policy_name := fmt.Sprintf("%s_%s", name, version)
 			file_name := fmt.Sprintf("bin/%s", policy_name)
 			if _, err := os.Stat(file_name); err != nil {
-				err = downloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version))
+				err = downloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version), client)
 				if err != nil {
 					logger.Error().Err(err).Str("file", policy_name).Msg("Error downloading policy")
 				}
@@ -79,14 +107,32 @@ func refresh() error {
 		}
 	}
 
+	requestURL = fmt.Sprintf("http://%s/logout", *addr)
+	req, err = http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	resp3, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp3.Body.Close()
 	return nil
 }
 
-func downloadFile(filepath string, url string) error {
+func downloadFile(filepath string, url string, client *http.Client) error {
 
 	logger.Info().Str("filepath", filepath).Msg("Downloading")
-	// Get the data
-	resp, err := http.Get(url)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		logger.Error().Err(err).Msg("")
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
