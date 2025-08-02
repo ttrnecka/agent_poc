@@ -85,5 +85,12 @@ services:
     command: ["run","-m", "brocade_switch_9","-p", "2222"]
     ports:
       - "2223:2222"
+  switch3:
+    image: trnecka/mock_server:latest
+    networks:
+      - agent_poc_network
+    command: ["run","-m", "brocade_switch_vf","-p", "2222"]
+    ports:
+      - "2224:2222"
 networks:
   agent_poc_network: {}

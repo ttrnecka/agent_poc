@@ -1,3 +1,13 @@
+mappers:
+  switchshow:
+    # case 1 - just a match without capture group - result will be stored as if normal endpoint was used
+    # case 2 - capture group without name - value of the cature group value will be used as key in the object
+    # case 3 - capture group with name - name will be used as key in hte object and capture group value as subkey
+    pattern: "^fosexec_--fid_(?P<vf_switches>\\d+)_-cmd_switchshow$"
+  fabricshow:
+    pattern: "^fosexec_--fid_(?P<vf_switches>\\d+)_-cmd_fabricshow$"
+  agshow:
+    pattern: "^fosexec_--fid_(?P<vf_switches>\\d+)_-cmd_agshow$"
 extractors:
   version:
     fabric_os:
@@ -26,6 +36,10 @@ extractors:
     fabric:
       method: match_group_all
       pattern: "(?m)^\\s*(?P<switch_domain>\\d+):\\s+(?P<switch_port_did>\\S+)\\s+(?P<switch_wwn>\\S+)\\s+(?P<switch_ip_addr>\\S+)\\s+(?P<switch_fc_ip_addr>\\S+)\\s+>?\\\"(?P<switch_name>[^\\\"]+)\\\"$"
+  agshow:
+    access_gateways:
+      method: match_group_all
+      pattern: "(?m)^\\s*(?P<wwn>\\S+)\\s+(?P<ports_count>\\d+)\\s+(?P<ip_addr>\\S+)\\s+(?P<fabric_os>\\S+)\\s+(?P<connection>\\S+)\\s+(?P<name>\\S+)$"
   licenseshow:
     license:
       method: match_group

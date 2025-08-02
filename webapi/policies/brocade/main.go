@@ -34,6 +34,23 @@ var commandsV103 []string = []string{
 	"license --show",
 }
 
+var commandsV104 []string = []string{
+	"version",
+	"lscfg --show",
+	"licenseshow",
+	"ipaddrshow",
+	"chassisname",
+	"fosexec --fid 128 -cmd \"switchshow\"",
+	"fosexec --fid 128 -cmd \"fabricshow\"",
+	"fosexec --fid 128 -cmd \"agshow\"",
+	"fosexec --fid 128 -cmd \"islshow\"",
+	"fosexec --fid 128 -cmd \"trunkshow\"",
+	"fosexec --fid 128 -cmd \"nsshow -t\"",
+	"fosexec --fid 128 -cmd \"nscamshow -t\"",
+	"fosexec --fid 128 -cmd \"mapsdb --show\"",
+	"fosexec --fid 128 -cmd \"cfgshow\"",
+}
+
 var logger zerolog.Logger
 
 func main() {
@@ -67,6 +84,8 @@ func main() {
 			commands = commandsV102
 		case "1.0.3":
 			commands = commandsV103
+		case "1.0.4":
+			commands = commandsV104
 		default:
 			logger.Fatal().Msgf("Unknown version %s", VERSION)
 		}

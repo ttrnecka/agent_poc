@@ -12,27 +12,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ExtractFunc func(input string, cfg ExtractorConfig) (any, error)
-
-type ExtractorConfig struct {
-	Method  string `yaml:"method"`            // e.g., "match_group", "parse_json"
-	Pattern string `yaml:"pattern,omitempty"` // for MatchGroup
-	Path    string `yaml:"path,omitempty"`    // for JSONPath, etc.
-}
-
-type Config struct {
-	Extractors map[string]map[string]ExtractorConfig `yaml:"extractors"`
-}
-
-type Endpoint struct {
-}
-
-var Extractors = map[string]ExtractFunc{
-	"match_group":     MatchGroup,
-	"match_group_all": MatchNamedGroupsAll,
-	"parse_json":      ParseJSON,
-}
-
 func GetCurrentDir() string {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {

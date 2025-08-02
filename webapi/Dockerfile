@@ -32,6 +32,7 @@ RUN bash ./build.sh 1.0.0
 RUN bash ./build.sh 1.0.1
 RUN bash ./build.sh 1.0.2
 RUN bash ./build.sh 1.0.3
+RUN bash ./build.sh 1.0.4
 
 # final stage
 FROM alpine 

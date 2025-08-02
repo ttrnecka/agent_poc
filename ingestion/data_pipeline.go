@@ -7,14 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/ingestion/parsers"
 )
-
-var mu sync.Mutex
 
 type Pipeline struct {
 	logger zerolog.Logger
@@ -164,12 +162,47 @@ func (p Pipeline) parseBody(body, policy, endpoint string) (map[string]any, erro
 		return nil, err
 	}
 
+	var extractors map[string]parsers.ExtractorConfig
+	subkeys := make([]string, 0)
+	// check endpoint parser matching name exactly
 	if parsers.Parsers[policy].Extractors[endpoint] == nil {
-		err := fmt.Errorf("no parser found for %s policy, endpoint %s", policy, endpoint)
-		return nil, err
+		p.logger.Info().Msgf("No direct parser found for %s policy, endpoint %s, trying mappers", policy, endpoint)
+
+		matched := false
+		for key, mapper := range parsers.Parsers[policy].Mappers {
+			p.logger.Debug().Msgf("Trying mapper %+v for %s", mapper, endpoint)
+			if mapper.Pattern != "" {
+				re := regexp.MustCompile(mapper.Pattern)
+				names := re.SubexpNames()
+				matches := re.FindStringSubmatch(endpoint)
+				if len(matches) > 0 {
+					if parsers.Parsers[policy].Extractors[key] != nil {
+						p.logger.Info().Msgf("Mapper matched: using mapped endpoint %s", key)
+						extractors = parsers.Parsers[policy].Extractors[key]
+						matched = true
+
+						// check if we capture groups or named capture groups
+						if len(matches) > 1 {
+							if len(names) > 1 {
+								subkeys = append(subkeys, names[1])
+							}
+							subkeys = append(subkeys, matches[1])
+						}
+						break
+					} else {
+						p.logger.Error().Msgf("Mapper matched: but no endpoint %s exist in configuration", key)
+					}
+				}
+			}
+		}
+		if !matched {
+			extractors = make(map[string]parsers.ExtractorConfig)
+		}
+	} else {
+		extractors = parsers.Parsers[policy].Extractors[endpoint]
 	}
 
-	for key, extractor := range parsers.Parsers[policy].Extractors[endpoint] {
+	for key, extractor := range extractors {
 		fn, ok := parsers.Extractors[extractor.Method]
 		if !ok {
 			err := fmt.Errorf("no extractor for method %q", extractor.Method)
@@ -181,10 +214,18 @@ func (p Pipeline) parseBody(body, policy, endpoint string) (map[string]any, erro
 			return nil, err
 		}
 		if val != nil {
-			result[key] = val
+			p.logger.Debug().Msgf("Parsed value: %+v", val)
+			tmpResult := result
+			for _, subkey := range subkeys {
+				if tmpResult[subkey] == nil {
+					tmpResult[subkey] = make(map[string]any)
+				}
+				tmpResult = tmpResult[subkey].(map[string]any)
+			}
+			tmpResult[key] = val
 		}
 	}
-
+	p.logger.Debug().Msgf("result: %+v", result)
 	return result, nil
 }
 

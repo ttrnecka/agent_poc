@@ -6,6 +6,12 @@ import (
 	"regexp"
 )
 
+var Extractors = map[string]ExtractFunc{
+	"match_group":     MatchGroup,
+	"match_group_all": MatchNamedGroupsAll,
+	"parse_json":      ParseJSON,
+}
+
 // match parser parses the input line and returns parsed value if match found
 
 func MatchGroup(input string, cfg ExtractorConfig) (any, error) {
