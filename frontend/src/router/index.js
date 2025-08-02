@@ -1,8 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import Login from '../views/Login.vue'
+import { useDataStore } from '@/stores/dataStore'
+
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
@@ -27,6 +30,18 @@ const router = createRouter({
       path: '/inventory',
       name: 'inventory',
       component: () => import('@/views/InventoryView.vue')
+    },
+    {
+    path: '/login',
+      component: Login,
+      beforeEnter: (to, from, next) => {
+        const dataStore = useDataStore()
+        if (dataStore.isLoggedIn) {
+          next('/') // redirect if already logged in
+        } else {
+          next()
+        }
+      }
     }
   ]
 })

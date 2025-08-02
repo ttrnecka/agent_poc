@@ -1,19 +1,50 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import { onMounted } from 'vue'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { onMounted, computed, watch } from 'vue'
 import Header from './components/Header.vue'
-import { useApiStore } from '@/stores/apiStore'
+import { useDataStore } from '@/stores/dataStore'
+import { storeToRefs } from 'pinia'
 
 import ws from '@/services/websocket'
 
-const apiStore = useApiStore()
+const dataStore = useDataStore()
+const { isLoggedIn } = storeToRefs(dataStore)
+
+const router = useRouter()
+
+watch(isLoggedIn, (val) => {
+  if (val) {
+    dataStore.getData()
+  } else {
+    console.log("pushing route", val)
+    router.push('/login')
+  }
+})
 
 onMounted(() => {
-  apiStore.loadCollectors()
-  apiStore.loadPolicies()
-  apiStore.loadProbes()
+  dataStore.getData()
   ws.connectWebSocket()
 })
+
+async function logout() {
+  try {
+    const res = await fetch('/logout', {
+      method: 'GET',
+    })
+
+    if (res.ok) {
+      isLoggedIn.value = false;
+      router.push('/login')
+    } else {
+      throw new Error(`API service not available: HTTP status: ${res.status}`);
+    }
+  } catch (err) {
+    console.error(err)
+    alert('Error logging out')
+  }
+}
+
+
 </script>
 
 <template>
@@ -28,7 +59,14 @@ onMounted(() => {
           <RouterLink to="/">Configuration</RouterLink>
           <RouterLink to="/collectors">Collector</RouterLink>
           <RouterLink to="/inventory">Inventory</RouterLink>
-        </nav>
+          <button
+              v-if="dataStore.isLoggedIn"
+              @click="logout"
+              class="btn btn-outline-secondary"
+            >
+              Logout
+            </button>
+          </nav>
       </div>
     </header>
 

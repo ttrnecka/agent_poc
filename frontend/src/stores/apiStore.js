@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const POLICY_ENDPOINT="/api/v1/policy"
 const PROBE_ENDPOINT="/api/v1/probe"
@@ -15,6 +15,12 @@ export const useApiStore = defineStore('api', () => {
   const probes = ref(null)
   const collectors = ref(null)
   const fetchError = ref(null)
+  
+  function reload() {
+    loadCollectors()
+    loadPolicies()
+    loadProbes()
+  }
 
   async function load(url, ref, timeoutMs = 10000) {
     const controller = new AbortController();
@@ -114,10 +120,10 @@ export const useApiStore = defineStore('api', () => {
   }
 
   function updateCollectorState(collector,state) {
-    collectors.value[collector] = state
+    collectors.value && (collectors.value[collector] = state);
   }
 
 
   return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState,
-           endpointEndpoint, deviceEndpoint, collectorEndpoint }
+           endpointEndpoint, deviceEndpoint, collectorEndpoint, reload }
 });
