@@ -1,32 +1,38 @@
 <template>
-  <div>
+  <div class="container-fluid">
     <p v-if="!apiStore.collectors">{{ loadedMessage }}</p>
-    <div v-else class="accordion" id="collectorsAccordion">
-      <div
-        class="accordion-item"
-        v-for="(collector,collector_name) in apiStore.collectors"
-        :key="collector_name"
-      >
-        <h2 class="accordion-header" :id="`heading-${collector_name}`">
-          <button
-            class="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            :data-bs-target="`#collapse-${collector_name}`"
-            aria-expanded="false"
-            :aria-controls="`collapse-${collector_name}`"
+    <div v-else class="row">
+      <div class="col-auto" style="flex: 0 0 200px;">
+      </div>
+      <div class="col">
+        <div class="accordion" id="collectorsAccordion">
+          <div
+            class="accordion-item"
+            v-for="(collector,collector_name) in apiStore.collectors"
+            :key="collector_name"
           >
-            {{ collector_name }}
-          </button>
-        </h2>
-        <div
-          :id="`collapse-${collector_name}`"
-          class="accordion-collapse collapse"
-          :aria-labelledby="`heading-${collector_name}`"
-          data-bs-parent="#collectorsAccordion"
-        >
-          <div class="accordion-body">
-            <Collector :collector="collector_name" :accordion-id="collector_name" />
+            <h2 class="accordion-header" :id="`heading-${collector_name}`">
+              <button
+                class="accordion-button collapsed"
+                type="button"
+                data-bs-toggle="collapse"
+                :data-bs-target="`#collapse-${collector_name}`"
+                aria-expanded="false"
+                :aria-controls="`collapse-${collector_name}`"
+              >
+                {{ collector_name }}
+              </button>
+            </h2>
+            <div
+              :id="`collapse-${collector_name}`"
+              class="accordion-collapse collapse"
+              :aria-labelledby="`heading-${collector_name}`"
+              data-bs-parent="#collectorsAccordion"
+            >
+              <div class="accordion-body">
+                <Collector :collector="collector_name" :accordion-id="collector_name" />
+              </div>
+            </div>
           </div>
         </div>
       </div>

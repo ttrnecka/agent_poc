@@ -7,9 +7,9 @@ import { useSessionStore } from '@/stores/sessionStore'
 
 const newProbe = {
     id: null,
-    policy: null,
-    collector: null,
-    version: null,
+    policy: "",
+    collector: "",
+    version: "",
     address: null,
     port: null,
     user: null,
@@ -108,82 +108,89 @@ const stateClass = computed(() => {
 
 </script>
 <template>
-<div>
+<div class="container-fluid">
   <p v-if="!apiStore.policies">{{ loadedMessage }}</p>
-  <div v-else>
-    <button @click="showProbeModal()" class="btn btn-primary">Add Probe</button>
-    <table class="table">
-      <thead class="thead-dark">
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">Collector</th>
-          <th scope="col">Policy Name</th>
-          <th scope="col">Policy Version</th>
-          <th scope="col">Address</th>
-          <th scope="col">Port</th>
-          <th scope="col">User</th>
-          <th scope="col">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index" class="probe-row">
-          <th scope="row">{{index+1}}</th>
-          <td>{{probe.collector}}</td>
-          <td>{{apiStore.policies[probe.policy].name}}</td>
-          <td>{{probe.version}}</td>
-          <td>{{probe.address}}</td>
-          <td>{{probe.port}}</td>
-          <td>{{probe.user}}</td>
-          <td>
-            <div class="d-flex gap-2">
-              <button
-                @click.stop="runProbe(probe)"
-                class="btn btn-primary"
-              >
-                Run
-              </button>
-              <button
-                @click.stop="validateProbe(probe)"
-                class="btn btn-primary"
-              >
-                Validate
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-  </table>
+  <div v-else class="row">
+    <div class="col-auto" style="flex: 0 0 200px;">
+      <button @click="showProbeModal()" class="btn btn-primary btn-sm w-100">Add Probe</button>
+    </div>
+    <div class="col">
+      <table class="table table-striped table-hover table-sm">
+        <thead class="">
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Collector</th>
+            <th scope="col">Policy Name</th>
+            <th scope="col">Policy Version</th>
+            <th scope="col">Address</th>
+            <th scope="col">Port</th>
+            <th scope="col">User</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index" class="probe-row">
+            <th scope="row">{{index+1}}</th>
+            <td>{{probe.collector}}</td>
+            <td>{{apiStore.policies[probe.policy].name}}</td>
+            <td>{{probe.version}}</td>
+            <td>{{probe.address}}</td>
+            <td>{{probe.port}}</td>
+            <td>{{probe.user}}</td>
+            <td>
+              <div class="d-flex gap-2">
+                <button
+                  @click.stop="runProbe(probe)"
+                  class="btn btn-primary btn-sm"
+                >
+                  Run
+                </button>
+                <button
+                  @click.stop="validateProbe(probe)"
+                  class="btn btn-primary btn-sm"
+                >
+                  Validate
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    
 </div>
   <div class="modal fade" id="probeModal" tabindex="-1" aria-labelledby="probeModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="probeModalLabel">Add probe</h1>
+            <h1 class="modal-title fs-6" id="probeModalLabel">Add probe</h1>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveProbe()">
               <div class="mb-3">
-                <label for="collectorInput" class="form-label">Collector</label>
-                <select id="collectorInput" class="form-select" aria-label="Select collector" v-model="state.newProbe.collector">
+                <select id="collectorInput" class="form-select form-select-sm" aria-label="Select collector" v-model="state.newProbe.collector">
+                  <option selected disabled value="">-- Collector --</option>
                   <option v-for="coll,index in apiStore.collectors" :value="index" :key="index">{{index}}</option>
                 </select>
               </div>
               <div class="mb-3">
-                <label for="policyInput" class="form-label">Policy Type</label>
-                <select id="policyInput" class="form-select" aria-label="Select policy type" v-model="state.newProbe.policy">
+                <select id="policyInput" class="form-select form-select-sm" aria-label="Select policy type" v-model="state.newProbe.policy">
+                  <option selected disabled value="">-- Policy --</option>
                   <option v-for="(pol,key) in apiStore.policies" :value="key" :key="key">{{pol.name}}</option>
                 </select>
               </div>
                 <div class="mb-3">
-                <label for="versionInput" class="form-label">Version</label>
                 <select
                   id="versionInput"
-                  class="form-select"
+                  class="form-select form-select-sm"
                   aria-label="Select policy version"
                   v-model="state.newProbe.version"
                 >
                   <option v-if="!state.newProbe.policy" disabled value="">-- Select policy first --</option>
+                  <option v-else disabled value="">-- Version --</option>
                   <option
                   v-for="version in (state.newProbe.policy ? apiStore.policies[state.newProbe.policy].versions : [])"
                   :value="version"
@@ -194,25 +201,22 @@ const stateClass = computed(() => {
                 </select>
                 </div>
               <div class="mb-3">
-                <label for="ipInput" class="form-label">Address</label>
-                <input type="text" class="form-control" id="ipInput" aria-describedby="ipHelp" v-model="state.newProbe.address">
-                <div id="ipHelp" class="form-text">IP or FQDN of the device</div>
+                <input type="text" class="form-control form-control-sm" id="ipInput" aria-describedby="ipHelp" v-model="state.newProbe.address"
+                placeholder="IP or FQDN of the device" title="IP or FQDN of the device">
               </div>
               <div class="mb-3">
-                <label for="portInput" class="form-label">Port</label>
-                <input type="text" class="form-control" id="portInput" aria-describedby="portHelp" v-model="state.newProbe.port">
-                <div id="portHelp" class="form-text">Port where the service is listening</div>
+                <input type="text" class="form-control form-control-sm" id="portInput" aria-describedby="portHelp" v-model="state.newProbe.port"
+                placeholder="Port" title="Port">
               </div>
               <div class="mb-3">
-                <label for="userInput" class="form-label">User</label>
-                <input type="text" class="form-control" id="userInput" aria-describedby="userHelp" v-model="state.newProbe.user">
-                <div id="userHelp" class="form-text">User with discover capabilities</div>
+                <input type="text" class="form-control form-control-sm" id="userInput" aria-describedby="userHelp" v-model="state.newProbe.user"
+                placeholder="User with discover capabilities" title="User with discover capabilities" >
               </div>
               <div class="mb-3">
-                <label for="passwordInput" class="form-label">Password</label>
-                <input type="password" class="form-control" id="passwordInput" v-model="state.newProbe.password">
+                <input type="password" class="form-control form-control-sm" id="passwordInput" v-model="state.newProbe.password" placeholder="Password"
+                title="Password">
               </div>
-              <button type="submit" class="btn btn-primary">Submit</button>
+              <button type="submit" class="btn btn-primary btn-sm">Submit</button>
             </form>
           </div>
         </div>

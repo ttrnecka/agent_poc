@@ -30,7 +30,6 @@ onMounted(() => {
 
       <div class="wrapper">
         <Header msg="Welcome to xAnalytics" />
-
         <nav>
           <RouterLink to="/">Configuration</RouterLink>
           <RouterLink to="/collectors">Collector</RouterLink>
@@ -38,7 +37,7 @@ onMounted(() => {
           <button
               v-if="dataStore.isLoggedIn"
               @click="dataStore.logoutUser"
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-primary btn-sm ms-2"
             >
               Logout
             </button>
@@ -65,7 +64,7 @@ nav {
   width: 100%;
   font-size: 12px;
   text-align: center;
-  margin-top: 2rem;
+  margin-top: 0rem;
 }
 
 nav a.router-link-exact-active {
@@ -89,7 +88,6 @@ nav a:first-of-type {
 @media (min-width: 1024px) {
   header {
     display: flex;
-    place-items: stretch;
     padding-right: calc(var(--section-gap) / 2);
   }
 
@@ -99,7 +97,6 @@ nav a:first-of-type {
 
   header .wrapper {
     display: flex;
-    place-items: flex-start;
     flex-wrap: wrap;
   }
 
@@ -108,8 +105,8 @@ nav a:first-of-type {
     margin-left: -1rem;
     font-size: 1rem;
 
-    padding: 1rem 0;
-    margin-top: 1rem;
+    padding: 1.1rem 0;
+    margin-top: 0rem;
   }
 }
 </style>
