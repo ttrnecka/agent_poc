@@ -8,7 +8,7 @@ import (
 )
 
 func output(file string) string {
-	cmd_file := fmt.Sprintf("data/%s", file)
+	cmd_file := fmt.Sprintf("data/api/%s", file)
 	if _, err := os.Stat(cmd_file); os.IsNotExist(err) {
 		return fmt.Sprintf("error: file %s does not exist", cmd_file)
 	}

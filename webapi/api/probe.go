@@ -39,7 +39,7 @@ func ProbeApiHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func saveProbes(r io.Reader) error {
-	outputFileName := "data/probes.json"
+	outputFileName := "data/api/probes.json"
 
 	// Create or open the output file for writing.
 	outputFile, err := os.Create(outputFileName)

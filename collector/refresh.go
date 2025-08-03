@@ -37,7 +37,7 @@ func refresh() error {
 	form.Set("username", "test")
 	form.Set("password", "test")
 
-	resp, err := client.PostForm(fmt.Sprintf("http://%s/login", *addr), form)
+	resp, err := client.PostForm(fmt.Sprintf("http://%s/api/login", *addr), form)
 	if err != nil {
 		logger.Error().Err(err).Msg("")
 		return err
@@ -107,7 +107,7 @@ func refresh() error {
 		}
 	}
 
-	requestURL = fmt.Sprintf("http://%s/logout", *addr)
+	requestURL = fmt.Sprintf("http://%s/api/logout", *addr)
 	req, err = http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		logger.Error().Err(err).Msg("")

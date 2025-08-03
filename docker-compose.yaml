@@ -31,8 +31,9 @@ services:
     networks:
       - agent_poc_network
     volumes:
-      - ./data/db:/data/db
-      - ./logs/webapi:/logs
+      - ./data:/data
+      - ./webapi/data/api:/data/api
+      - ./logs:/logs
   ingest_service:
     build:
       context: .
@@ -44,7 +45,7 @@ services:
       - agent_poc_network
     volumes:
       - ./data:/data
-      - ./logs/ingest:/logs
+      - ./logs:/logs
       - ./ingestion/config/:/config
     command: ["-upload-dir=/data"]
   collector1:
@@ -60,7 +61,7 @@ services:
     depends_on:
       - webapi
     volumes:
-      - ./logs/collector:/logs
+      - ./logs:/logs
   collector2:
     build:
       context: . 
@@ -74,7 +75,7 @@ services:
     depends_on:
       - webapi
     volumes:
-      - ./logs/collector:/logs
+      - ./logs:/logs
   switch1:
     image: trnecka/mock_server:latest
     networks:
