@@ -50,28 +50,6 @@ export const useApiStore = defineStore('api', () => {
     }
   }
 
-  // async function loadAndReturn(url, timeoutMs = 10000) {
-  //   const controller = new AbortController();
-  //   const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-  //   try {
-  //     const res = await fetch(url, { signal: controller.signal });
-  //     clearTimeout(timeout);
-
-  //     if (!res.ok) {
-  //       throw new Error(`API service not available: HTTP status: ${res.status}`);
-  //     }
-
-  //     const data = await res.json();
-  //     return { data, error: null };
-  //   } catch (error) {
-  //     clearTimeout(timeout);
-  //     const errMsg = error.name === 'AbortError' ? 'Request timed out' : error.message || error;
-  //     console.error("Fetch failed:", errMsg);
-  //     return { data: null, error };
-  //   }
-  // }
-
   async function loadPolicies() {
     await load(POLICY_ENDPOINT,policies)
   }

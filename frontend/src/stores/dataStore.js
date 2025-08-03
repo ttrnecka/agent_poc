@@ -1,15 +1,24 @@
 import { defineStore } from 'pinia'
-import { ref, reactive } from 'vue'
+import { ref, reactive,computed } from 'vue'
 import { useApiStore } from '@/stores/apiStore'
+import { useRouter } from 'vue-router'
 
 export const useDataStore = defineStore('data', () => {
-  const isLoggedIn = ref(true)
+  const loggedIn = ref(false)
   const user = reactive({})
   
   const apiStore = useApiStore()
 
+  const isLoggedIn = computed(() => loggedIn.value)
+
+  const router = useRouter()
+
+  function setLoggedIn(value) {
+    loggedIn.value = value
+  }
+
   async function getData() {
-    await load("/user",user)
+    // await load("/user",user)
     if (isLoggedIn.value) {
       apiStore.reload()
     }
@@ -27,7 +36,8 @@ export const useDataStore = defineStore('data', () => {
       if (!res.ok) {
         if (res.status == 401) {
           console.log("GOT 401")
-          isLoggedIn.value = false;
+          loggedIn.value = false;
+          router.push("/login")
         }
         throw new Error(`API service not available: HTTP status: ${res.status}`);
       }
@@ -38,13 +48,16 @@ export const useDataStore = defineStore('data', () => {
       } catch (jsonError) {
         throw new Error("Failed to parse JSON response");
       }
-
       Object.assign(reactive, data)
-      isLoggedIn.value = true;
+      loggedIn.value = true;
 
     } catch (error) {
         console.error("Fetch failed:", error.name === 'AbortError' ? 'Request timed out' : error.message || error);
     }
   }
-  return { isLoggedIn, getData }
+
+  //initialize the user and set the loggedIn var
+  load("/user",user)
+
+  return { loggedIn,user, isLoggedIn, getData, setLoggedIn}
 });

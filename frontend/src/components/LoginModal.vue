@@ -29,10 +29,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
-import { storeToRefs } from 'pinia'
 
 const dataStore = useDataStore()
-const { isLoggedIn } = storeToRefs(dataStore)
+
 
 const username = ref('')
 const password = ref('')
@@ -50,12 +49,12 @@ const submitLogin = async () => {
 
     if (res.ok) {
       const data = await res.json()
-      isLoggedIn.value = true;
+      dataStore.setLoggedIn(true)
       router.push('/')
     } else {
       alert('Invalid login')
     }
-  } catch (err) {
+   } catch (err) {
     console.error(err)
     alert('Error logging in')
   }

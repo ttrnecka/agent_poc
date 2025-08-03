@@ -3,27 +3,18 @@ import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { onMounted, computed, watch } from 'vue'
 import Header from './components/Header.vue'
 import { useDataStore } from '@/stores/dataStore'
-import { storeToRefs } from 'pinia'
-
 import ws from '@/services/websocket'
 
-const dataStore = useDataStore()
-const { isLoggedIn } = storeToRefs(dataStore)
-
 const router = useRouter()
+const dataStore = useDataStore()
 
-watch(isLoggedIn, (val) => {
+watch(() => dataStore.isLoggedIn, (val) => {
   if (val) {
     dataStore.getData()
+    ws.connectWebSocket()
   } else {
-    console.log("pushing route", val)
     router.push('/login')
   }
-})
-
-onMounted(() => {
-  dataStore.getData()
-  ws.connectWebSocket()
 })
 
 async function logout() {
@@ -33,7 +24,7 @@ async function logout() {
     })
 
     if (res.ok) {
-      isLoggedIn.value = false;
+      dataStore.setLoggedIn(false)
       router.push('/login')
     } else {
       throw new Error(`API service not available: HTTP status: ${res.status}`);
