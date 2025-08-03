@@ -26,7 +26,7 @@ export default defineConfig({
         usePolling: true
     },
     proxy: {
-      '^/(api|login|logout|user)': {
+      '/api': {
         target: 'http://localhost:8888',
         changeOrigin: true,
       },

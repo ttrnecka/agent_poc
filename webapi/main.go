@@ -73,14 +73,15 @@ func router() http.Handler {
 
 	// index
 	r.Handle("/", http.HandlerFunc(indexHandler))
-	r.Handle("/login", http.HandlerFunc(loginHandler))
-	r.Handle("/user", http.HandlerFunc(userHandler))
-	r.Handle("/logout", http.HandlerFunc(logoutHandler))
+	r.Handle("/api/login", http.HandlerFunc(loginHandler))
+	r.Handle("/api/user", http.HandlerFunc(userHandler))
+	r.Handle("/api/logout", http.HandlerFunc(logoutHandler))
 
 	// Middleware definitions
 	r.UseForPrefix("/api/v1/", authMiddleware, commonApiMiddleware, sessionManager.LoadAndSave)
-	r.UseForPrefix("/login", commonApiMiddleware, sessionManager.LoadAndSave)
-	r.UseForPrefix("/user", authMiddleware, commonApiMiddleware, sessionManager.LoadAndSave)
+	r.UseForPrefix("/api/login", commonApiMiddleware, sessionManager.LoadAndSave)
+	r.UseForPrefix("/api/user", authMiddleware, commonApiMiddleware, sessionManager.LoadAndSave)
+	r.UseForPrefix("/api/logout", commonApiMiddleware, sessionManager.LoadAndSave)
 	r.UseDefault(sessionManager.LoadAndSave) // applies to /public, etc.
 
 	hub := ws.GetHub()

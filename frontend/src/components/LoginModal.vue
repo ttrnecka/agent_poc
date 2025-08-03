@@ -27,36 +27,14 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 
 const dataStore = useDataStore()
 
-
 const username = ref('')
 const password = ref('')
-const router = useRouter()
 
 const submitLogin = async () => {
-  try {
-    const formData = new FormData()
-    formData.append('username', username.value)
-    formData.append('password', password.value)
-    const res = await fetch('/login', {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (res.ok) {
-      const data = await res.json()
-      dataStore.setLoggedIn(true)
-      router.push('/')
-    } else {
-      alert('Invalid login')
-    }
-   } catch (err) {
-    console.error(err)
-    alert('Error logging in')
-  }
+  await dataStore.loginUser(username.value,password.value)
 }
 </script>

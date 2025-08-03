@@ -1,11 +1,11 @@
 <script setup>
-import { RouterLink, RouterView, useRouter } from 'vue-router'
+import { RouterLink, RouterView } from 'vue-router'
 import { onMounted, computed, watch } from 'vue'
 import Header from './components/Header.vue'
 import { useDataStore } from '@/stores/dataStore'
 import ws from '@/services/websocket'
+import router from '@/router'
 
-const router = useRouter()
 const dataStore = useDataStore()
 
 watch(() => dataStore.isLoggedIn, (val) => {
@@ -17,24 +17,9 @@ watch(() => dataStore.isLoggedIn, (val) => {
   }
 })
 
-async function logout() {
-  try {
-    const res = await fetch('/logout', {
-      method: 'GET',
-    })
-
-    if (res.ok) {
-      dataStore.setLoggedIn(false)
-      router.push('/login')
-    } else {
-      throw new Error(`API service not available: HTTP status: ${res.status}`);
-    }
-  } catch (err) {
-    console.error(err)
-    alert('Error logging out')
-  }
-}
-
+onMounted(() => {
+  dataStore.fetchUser();
+})
 
 </script>
 
@@ -52,7 +37,7 @@ async function logout() {
           <RouterLink to="/inventory">Inventory</RouterLink>
           <button
               v-if="dataStore.isLoggedIn"
-              @click="logout"
+              @click="dataStore.logoutUser"
               class="btn btn-outline-secondary"
             >
               Logout
