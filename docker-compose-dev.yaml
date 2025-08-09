@@ -24,10 +24,15 @@ services:
       - "8888:8888"
     networks:
       - agent_poc_network
+    restart: always
     volumes:
       - ./data:/data
       - ./webapi/data/api:/data/api
       - ./logs:/logs
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_URI: mongodb://mongodb:27017/mydb
   ingest_service:
     build:
       context: .
@@ -39,6 +44,7 @@ services:
       - "8889:8888"
     networks:
       - agent_poc_network
+    restart: always
     volumes:
       - ./data:/data
       - ./logs:/logs
@@ -54,8 +60,7 @@ services:
     networks:
       - agent_poc_network
     command: ["--addr", "webapi:8888", "--source", "collector1","--ingest","ingest_service:8888"]
-    depends_on:
-      - webapi
+    restart: always
     volumes:
       - ./logs:/logs
   collector2:
@@ -68,8 +73,7 @@ services:
     networks:
       - agent_poc_network
     command: ["--addr", "webapi:8888", "--source", "collector2","--ingest","ingest_service:8888"]
-    depends_on:
-      - webapi
+    restart: always
     volumes:
       - ./logs:/logs
   switch1:
@@ -93,5 +97,18 @@ services:
     command: ["run","-m", "brocade_switch_vf","-p", "2222"]
     ports:
       - "2224:2222"
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./webapi/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - agent_poc_network
 networks:
   agent_poc_network: {}
+volumes:
+  mongo-data:

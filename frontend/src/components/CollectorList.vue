@@ -12,7 +12,7 @@ const loadedMessage = computed(() => {
 </script>
 <template>
 <div class="container-fluid">
-  <p v-if="!apiStore.collectors">{{ loadedMessage }}</p>
+  <p v-if="!apiStore.sortedCollectors">{{ loadedMessage }}</p>
   <div v-else class="row">
     <div class="col-auto" style="flex: 0 0 200px;">
     </div>
@@ -26,7 +26,7 @@ const loadedMessage = computed(() => {
         </thead>
         <tbody>
           <tr v-for="(coll, index) in apiStore.collectors" :key="index">
-            <td>{{index}}</td>
+            <td>{{coll.key}}</td>
             <td>{{coll.status || collectorStatus}}</td>
           </tr>
         </tbody>

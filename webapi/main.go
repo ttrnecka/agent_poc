@@ -10,6 +10,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/api"
+	"github.com/ttrnecka/agent_poc/webapi/db"
 	"github.com/ttrnecka/agent_poc/webapi/ws"
 	"golang.org/x/crypto/bcrypt"
 
@@ -40,12 +41,19 @@ func main() {
 	hashedPw, _ := bcrypt.GenerateFromPassword([]byte("test"), bcrypt.DefaultCost)
 	users["test"] = User{ID: 1, Email: "test@test.com", Username: "test", Password: string(hashedPw)}
 
-	srv := &http.Server{
-		Addr:    ":8888",
-		Handler: router(),
+	dB, err := db.Connect()
+	if err != nil {
+		logger.Fatal().Err(err).Msg("")
 	}
 
-	err := srv.ListenAndServe()
+	handler := api.NewHandler(dB)
+
+	srv := &http.Server{
+		Addr:    ":8888",
+		Handler: router(handler),
+	}
+
+	err = srv.ListenAndServe()
 	if err != nil {
 		logger.Error().Err(err).Msg("")
 	}
@@ -60,14 +68,14 @@ func commonApiMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func router() http.Handler {
+func router(handler *api.Handler) http.Handler {
 	// mux := http.NewServeMux()
 	r := NewMiddlewareRouter()
 	//api
-	r.Handle("/api/v1/policy", http.HandlerFunc(api.PolicyApiHandler))
+	r.Handle("/api/v1/policy", http.HandlerFunc(handler.PolicyApiHandler))
 	r.Handle("/api/v1/policy/", http.HandlerFunc(api.PolicyItemApiHandler))
-	r.Handle("/api/v1/probe", http.HandlerFunc(api.ProbeApiHandler))
-	r.Handle("/api/v1/collector", http.HandlerFunc(api.CollectorApiHandler))
+	r.Handle("/api/v1/probe", http.HandlerFunc(handler.ProbeApiHandler))
+	r.Handle("/api/v1/collector", http.HandlerFunc(handler.CollectorApiHandler))
 	r.Handle("/api/v1/data/collector/", http.HandlerFunc(api.DataHandler))
 	r.Handle("/api/v1/data/collector", http.HandlerFunc(api.DataHandler)) // handles no trailing slash too
 

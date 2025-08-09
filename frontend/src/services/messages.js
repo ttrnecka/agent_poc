@@ -30,13 +30,13 @@ export function sendMessage(type, destinationId, text, session = uuidv4()) {
 export function handleMessage(msg) {
   const apiStore = useApiStore();
   
-  console.log('📥 Message:', msg.Text);
+  console.log('📥 Message:', msg);
   if (msg.Source != getClientId()) {
     if (msg.Type == MESSAGE_TYPE.ONLINE) {
-      apiStore.updateCollectorState(msg.Source,{status: "ONLINE"})
+      apiStore.updateCollectorStatus(msg.Source,"ONLINE")
     }
     if (msg.Type == MESSAGE_TYPE.OFFLINE) {
-      apiStore.updateCollectorState(msg.Source,{status: "OFFLINE"})
+      apiStore.updateCollectorStatus(msg.Source,"OFFLINE")
     }
   }
 }

@@ -16,6 +16,8 @@ export const useApiStore = defineStore('api', () => {
   const collectors = ref(null)
   const fetchError = ref(null)
   
+  const sortedCollectors = computed(() => collectors.value.sort((a, b) => a.key.localeCompare(b.key, undefined, { sensitivity: 'base' })))
+
   function reload() {
     loadCollectors()
     loadPolicies()
@@ -97,11 +99,11 @@ export const useApiStore = defineStore('api', () => {
     return true
   }
 
-  function updateCollectorState(collector,state) {
-    collectors.value && (collectors.value[collector] = state);
+  function updateCollectorStatus(collector,status) {
+    collectors.value && (collectors.value.find((elm) => elm.key === collector).status = status);
   }
 
 
-  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, loadCollectors, updateCollectorState,
+  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, sortedCollectors, loadCollectors, updateCollectorStatus,
            endpointEndpoint, deviceEndpoint, collectorEndpoint, reload }
 });

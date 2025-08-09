@@ -8,29 +8,29 @@
         <div class="accordion" id="collectorsAccordion">
           <div
             class="accordion-item"
-            v-for="(collector,collector_name) in apiStore.collectors"
-            :key="collector_name"
+            v-for="(collector,idx) in apiStore.collectors"
+            :key="idx"
           >
-            <h2 class="accordion-header" :id="`heading-${collector_name}`">
+            <h2 class="accordion-header" :id="`heading-${collector.key}`">
               <button
                 class="accordion-button collapsed"
                 type="button"
                 data-bs-toggle="collapse"
-                :data-bs-target="`#collapse-${collector_name}`"
+                :data-bs-target="`#collapse-${collector.key}`"
                 aria-expanded="false"
-                :aria-controls="`collapse-${collector_name}`"
+                :aria-controls="`collapse-${collector.key}`"
               >
-                {{ collector_name }}
+                {{ collector.key }}
               </button>
             </h2>
             <div
-              :id="`collapse-${collector_name}`"
+              :id="`collapse-${collector.key}`"
               class="accordion-collapse collapse"
-              :aria-labelledby="`heading-${collector_name}`"
+              :aria-labelledby="`heading-${collector.key}`"
               data-bs-parent="#collectorsAccordion"
             >
               <div class="accordion-body">
-                <Collector :collector="collector_name" :accordion-id="collector_name" />
+                <Collector :collector="collector.key" :accordion-id="collector.key" />
               </div>
             </div>
           </div>

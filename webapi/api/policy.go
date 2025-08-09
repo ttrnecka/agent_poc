@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,8 +16,16 @@ type Policy struct {
 	Versions []string `json:"versions"`
 }
 
-func PolicyApiHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, output("policies.json"))
+func (h *Handler) PolicyApiHandler(w http.ResponseWriter, r *http.Request) {
+	policies, err := h.DB.GetAllPolicies(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to fetch policies", http.StatusInternalServerError)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(policies); err != nil {
+		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
+		return
+	}
 }
 
 func PolicyItemApiHandler(w http.ResponseWriter, r *http.Request) {

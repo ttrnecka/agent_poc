@@ -21,6 +21,7 @@ COPY collector collector
 COPY ingestion ingestion
 COPY logger logger
 COPY webapi webapi
+COPY common common
 RUN go mod download
 RUN go build -o /webapi ./webapi
 
@@ -38,7 +39,6 @@ RUN bash ./build.sh 1.0.4
 FROM alpine 
 WORKDIR /
 COPY --from=build /webapi /webapi
-COPY --from=build /app/webapi/data/api /data/api
 COPY --from=build /app/webapi/policies/brocade/ /policies/bin
 EXPOSE 8888
 ENTRYPOINT ["/webapi"]
