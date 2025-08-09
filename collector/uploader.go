@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -93,19 +93,15 @@ func uploadFile(path string) error {
 	}
 	defer file.Close()
 
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return err
-	}
-
 	ingestURL := fmt.Sprintf("http://%s/upload", *ingest)
 
-	req, err := http.NewRequest("POST", ingestURL, bytes.NewReader(content))
+	req, err := http.NewRequest("POST", ingestURL, file)
 	if err != nil {
 		return err
 	}
+	mimeType := mime.TypeByExtension(filepath.Ext(path))
 
-	req.Header.Set("Content-Type", "application/octet-stream")
+	req.Header.Set("Content-Type", mimeType)
 	req.Header.Set("File-Name", filepath.Base(path))
 
 	client := &http.Client{Timeout: 10 * time.Second}

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"archive/zip"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,8 +196,6 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 			continue
 		}
 		srcPath := filepath.Join(src_folder, entry.Name())
-		destPath := filepath.Join(dest_folder, entry.Name())
-
 		logger.Info().Str("file", srcPath).Msg("Processing file")
 
 		timestamp, device, endpoint, err := parseFilename(entry.Name())
@@ -224,11 +224,22 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 				string(content))
 
 		// Write modified content to destination
-		err = os.WriteFile(destPath, modifiedContent, 0644)
+		err = os.WriteFile(srcPath, modifiedContent, 0644)
 		if err != nil {
-			logger.Error().Err(err).Str("file", destPath).Msg("Failed to write file")
+			logger.Error().Err(err).Str("file", srcPath).Msg("Failed to tag file")
 		}
-		logger.Info().Str("file", destPath).Msg("New file written")
+		logger.Info().Str("file", srcPath).Msg("File tagged")
+	}
+	// now all files are tagged
+	err = zipDirAndDelete(src_folder, uUID)
+	if err != nil {
+		logger.Error().Err(err).Msg("Failed to zip folder")
+	}
+	srcPath := filepath.Join(src_folder, uUID+".zip")
+	dstPath := filepath.Join(dest_folder, uUID+".zip")
+	err = os.Rename(srcPath, dstPath)
+	if err != nil {
+		logger.Error().Err(err).Msgf("failed to move file: %s", srcPath)
 	}
 }
 
@@ -255,4 +266,80 @@ func splitLast(s string) (string, string) {
 	first := strings.Join(parts[:len(parts)-1], "_")
 	last := parts[len(parts)-1]
 	return first, last
+}
+
+func zipDirAndDelete(srcFolder, name string) error {
+	absPath, err := filepath.Abs(srcFolder)
+	if err != nil {
+		return err
+	}
+
+	zipFileName := name + ".zip"
+	zipFilePath := filepath.Join(absPath, zipFileName)
+
+	zipFile, err := os.Create(zipFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create zip file: %w", err)
+	}
+	defer zipFile.Close()
+
+	zipWriter := zip.NewWriter(zipFile)
+	defer zipWriter.Close()
+
+	entries, err := os.ReadDir(absPath)
+	if err != nil {
+		return fmt.Errorf("failed to read directory: %w", err)
+	}
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Skip directories, no recursion here
+			continue
+		}
+
+		if entry.Name() == zipFileName {
+			// Skip the ZIP file itself to avoid recursion
+			continue
+		}
+
+		filePath := filepath.Join(absPath, entry.Name())
+
+		file, err := os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("failed to open file %s: %w", filePath, err)
+		}
+
+		info, err := file.Stat()
+		if err != nil {
+			file.Close()
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			file.Close()
+			return err
+		}
+		header.Name = entry.Name() // top-level file name only
+		header.Method = zip.Deflate
+
+		writer, err := zipWriter.CreateHeader(header)
+		if err != nil {
+			file.Close()
+			return err
+		}
+
+		if _, err := io.Copy(writer, file); err != nil {
+			file.Close()
+			return err
+		}
+		file.Close()
+
+		// Delete file after adding it to ZIP
+		if err := os.Remove(filePath); err != nil {
+			return fmt.Errorf("failed to delete file %s: %w", filePath, err)
+		}
+	}
+	logger.Info().Msgf("ZIP created at %s", zipFilePath)
+	return nil
 }

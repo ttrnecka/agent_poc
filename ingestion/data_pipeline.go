@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bufio"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,27 @@ import (
 
 type Pipeline struct {
 	logger zerolog.Logger
+}
+
+func (p Pipeline) Ingest(filePath string) {
+	logger.Info().Msgf("Unzipping %s", filePath)
+	tmpDir, err := unzipToTemp(filePath)
+	if err != nil {
+		logger.Error().Err(err).Msgf("Cannot unzip file %s", filePath)
+	}
+	logger.Info().Msgf("Going to read files in %s", tmpDir)
+	entries, err := os.ReadDir(tmpDir)
+	if err != nil {
+		logger.Error().Err(err).Str("folder", tmpDir).Msg("Failed to read source folder")
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			// Skip subdirectories (you can recurse if needed)
+			continue
+		}
+		srcPath := filepath.Join(tmpDir, entry.Name())
+		p.Process(srcPath)
+	}
 }
 
 func (p Pipeline) Process(file_path string) {
@@ -240,11 +262,12 @@ func (p Pipeline) PostProcess(srcPath string, success bool) {
 	msg = fmt.Sprintf("%s Moving file to %s", msg, destDir)
 	p.logger.Info().Msg(msg)
 
-	fileName := filepath.Base(srcPath)
+	// fileName := filepath.Base(srcPath)
 
-	destPath := filepath.Join(destDir, fileName)
+	// destPath := filepath.Join(destDir, fileName)
 
-	err := os.Rename(srcPath, destPath)
+	// err := os.Rename(srcPath, destPath)
+	err := moveFile(srcPath, destDir)
 	if err != nil {
 		p.logger.Error().Err(err).Msg("Move failed")
 		return
@@ -292,5 +315,117 @@ func saveJson(filePath string, data map[string]any) error {
 		err = fmt.Errorf("failed to write parsed json to file: %w", err)
 		return err
 	}
+	return nil
+}
+
+func unzipToTemp(zipFilePath string) (string, error) {
+	// Open the zip archive for reading
+	r, err := zip.OpenReader(zipFilePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open zip: %w", err)
+	}
+	defer r.Close()
+
+	// Create a temp directory to extract files into
+	tempDir, err := os.MkdirTemp("", "unzipped-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp dir: %w", err)
+	}
+
+	// Iterate through each file in the archive
+	for _, f := range r.File {
+		fPath := filepath.Join(tempDir, f.Name)
+
+		// Get relative path from tempDir to fPath
+		rel, err := filepath.Rel(tempDir, fPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to get relative path: %w", err)
+		}
+
+		// If rel starts with ".." then fPath is outside tempDir => potential ZipSlip
+		if strings.HasPrefix(rel, ".."+string(filepath.Separator)) || rel == ".." {
+			return "", fmt.Errorf("illegal file path: %s", fPath)
+		}
+
+		if f.FileInfo().IsDir() {
+			// Create directory
+			if err := os.MkdirAll(fPath, os.ModePerm); err != nil {
+				return "", err
+			}
+			continue
+		}
+
+		// Open the file inside the zip
+		srcFile, err := f.Open()
+		if err != nil {
+			return "", err
+		}
+
+		// Create destination file
+		destFile, err := os.OpenFile(fPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			srcFile.Close()
+			return "", err
+		}
+
+		// Copy contents
+		_, err = io.Copy(destFile, srcFile)
+
+		// Close files
+		srcFile.Close()
+		destFile.Close()
+
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return tempDir, nil
+}
+
+func moveFile(srcPath, dstDir string) error {
+	// Make sure destination directory exists
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("failed to create destination directory: %w", err)
+	}
+
+	dstPath := filepath.Join(dstDir, filepath.Base(srcPath))
+
+	// Try to rename first (fast path)
+	if err := os.Rename(srcPath, dstPath); err == nil {
+		return nil
+	}
+
+	// If rename fails, fallback to copy + delete
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dstPath)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		return fmt.Errorf("failed to copy file data: %w", err)
+	}
+
+	// Flush to disk
+	if err := dstFile.Sync(); err != nil {
+		return fmt.Errorf("failed to sync destination file: %w", err)
+	}
+
+	// Close files before deletion
+	srcFile.Close()
+	dstFile.Close()
+
+	// Delete original file
+	if err := os.Remove(srcPath); err != nil {
+		return fmt.Errorf("failed to delete source file after copy: %w", err)
+	}
+
 	return nil
 }
