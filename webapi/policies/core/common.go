@@ -43,7 +43,7 @@ func checkFolder(folder string) error {
 	return nil
 }
 
-// TODO if this collector is enhanced so it pulls from more that just that on switch, the endpoint needs to be properly pointin to corect device
+// TODO if this collector is enhanced so it pulls from more that just that one device in a run, the endpoint needs to be properly pointing to correct device
 func generateFilename(command string) string {
 	return fmt.Sprintf("%d_%s_%s.txt", time.Now().UnixMicro(), strings.SplitN(viper.GetString("endpoint"), ":", 2)[0], sanitizeCommand(command))
 }

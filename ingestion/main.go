@@ -102,6 +102,7 @@ func handleUpload(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to write file", http.StatusInternalServerError)
 		return
 	}
+	// TODO add workers and not endless go routines
 	go Pipeline{}.Ingest(outPath)
 
 	logger.Info().Msgf("Received file: %s -> %s", fileName, outPath)

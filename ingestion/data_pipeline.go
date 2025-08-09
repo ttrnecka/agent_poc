@@ -19,6 +19,9 @@ type Pipeline struct {
 	logger zerolog.Logger
 }
 
+// TODO needs error handling if there is an issue
+// either retry or send to failed
+// some sort of notification once the persistence is ready based on the collection_id
 func (p Pipeline) Ingest(filePath string) {
 	logger.Info().Msgf("Unzipping %s", filePath)
 	tmpDir, err := common.UnzipToTemp(filePath)
@@ -32,7 +35,7 @@ func (p Pipeline) Ingest(filePath string) {
 	}
 	for _, entry := range entries {
 		if entry.IsDir() {
-			// Skip subdirectories (you can recurse if needed)
+			// Skip subdirectories for now
 			continue
 		}
 		srcPath := filepath.Join(tmpDir, entry.Name())

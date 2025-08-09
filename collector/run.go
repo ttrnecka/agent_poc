@@ -96,7 +96,7 @@ func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult
 	for {
 		select {
 		case cr := <-result:
-			// TODO: return out of this branch needs to handle local message persistence in cas we need to resend it
+			// TODO: return out of this branch needs to handle local message persistence in case we need to resend it
 			text := "Request succeeded"
 			mc := ws.MSG_FINISHED_OK
 			if cr.Code != 0 {
@@ -137,7 +137,7 @@ func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult
 
 			return
 		case <-ticker.C:
-			// TODO this will just send a message, it would be nice if we can stream here the logs
+			// TODO this will just send a message, it would be nice if we can stream the logs here
 			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
 			m.Session = mes.Session
 
