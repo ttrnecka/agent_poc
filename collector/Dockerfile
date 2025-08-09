@@ -17,6 +17,7 @@ COPY collector collector
 COPY ingestion ingestion
 COPY logger logger
 COPY webapi webapi
+COPY common common
 
 RUN go mod download
 RUN go build -o /collector ./collector
