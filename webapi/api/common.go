@@ -3,16 +3,13 @@ package api
 import (
 	"strconv"
 	"strings"
-
-	"github.com/ttrnecka/agent_poc/webapi/db"
 )
 
 type Handler struct {
-	DB *db.DB
 }
 
-func NewHandler(db *db.DB) *Handler {
-	return &Handler{DB: db}
+func NewHandler() *Handler {
+	return &Handler{}
 }
 
 // func output(file string) string {

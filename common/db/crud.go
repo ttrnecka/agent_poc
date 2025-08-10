@@ -69,6 +69,10 @@ func (c *CRUD[T]) Find(ctx context.Context, filter interface{}, opts ...*options
 	if err := cursor.All(ctx, &results); err != nil {
 		return nil, err
 	}
+	// return empty array if nothing is found
+	if results == nil {
+		return []T{}, nil
+	}
 	return results, nil
 }
 

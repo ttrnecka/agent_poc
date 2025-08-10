@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ttrnecka/agent_poc/webapi/api"
+	"github.com/ttrnecka/agent_poc/webapi/db"
 )
 
 var httpClient *http.Client
@@ -90,7 +90,7 @@ func ApiLogout() error {
 	return nil
 }
 
-func ApiGetProbes() ([]api.Probe, error) {
+func ApiGetProbes() ([]db.Probe, error) {
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -103,7 +103,7 @@ func ApiGetProbes() ([]api.Probe, error) {
 	}
 	defer resp.Body.Close()
 
-	var probes []api.Probe
+	var probes []db.Probe
 	err = json.NewDecoder(resp.Body).Decode(&probes)
 	if err != nil {
 		return nil, err

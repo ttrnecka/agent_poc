@@ -11,9 +11,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func EnsureUserCollection(db *DB) error {
+func EnsureUserCollection() error {
 	ctx := context.Background()
-	col := db.database.Collection("users")
+	col := dB.database.Collection("users")
 
 	// 1. Create compound index for email + status
 	_, err := col.Indexes().CreateOne(ctx, mongo.IndexModel{

@@ -8,3 +8,7 @@ type User struct {
 	Email         string `bson:"email" json:"email"`
 	Password      string `bson:"password" json:"-"` // Excluded from JSON output
 }
+
+func Users() *cdb.CRUD[User] {
+	return cdb.NewCRUD[User](dB.database, "users")
+}

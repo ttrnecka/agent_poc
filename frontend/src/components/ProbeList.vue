@@ -132,7 +132,7 @@ const stateClass = computed(() => {
           <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index" class="probe-row">
             <th scope="row">{{index+1}}</th>
             <td>{{probe.collector}}</td>
-            <td>{{apiStore.policies.find((elm) => elm.key === probe.policy).name}}</td>
+            <td>{{apiStore.policies.find((elm) => elm.name === probe.policy).description}}</td>
             <td>{{probe.version}}</td>
             <td>{{probe.address}}</td>
             <td>{{probe.port}}</td>
@@ -173,13 +173,13 @@ const stateClass = computed(() => {
               <div class="mb-3">
                 <select id="collectorInput" class="form-select form-select-sm" aria-label="Select collector" v-model="state.newProbe.collector">
                   <option selected disabled value="">-- Collector --</option>
-                  <option v-for="coll,index in apiStore.collectors" :value="coll.key" :key="index">{{coll.key}}</option>
+                  <option v-for="coll,index in apiStore.collectors" :value="coll.name" :key="index">{{coll.name}}</option>
                 </select>
               </div>
               <div class="mb-3">
                 <select id="policyInput" class="form-select form-select-sm" aria-label="Select policy type" v-model="state.newProbe.policy">
                   <option selected disabled value="">-- Policy --</option>
-                  <option v-for="(pol,key) in apiStore.policies" :value="pol.key" :key="key">{{pol.name}}</option>
+                  <option v-for="(pol,key) in apiStore.policies" :value="pol.name" :key="key">{{pol.description}}</option>
                 </select>
               </div>
                 <div class="mb-3">
@@ -192,7 +192,7 @@ const stateClass = computed(() => {
                   <option v-if="!state.newProbe.policy" disabled value="">-- Select policy first --</option>
                   <option v-else disabled value="">-- Version --</option>
                   <option
-                  v-for="version in (state.newProbe.policy ? apiStore.policies.find((elm) => elm.key === state.newProbe.policy).versions : [])"
+                  v-for="version in (state.newProbe.policy ? apiStore.policies.find((elm) => elm.name === state.newProbe.policy).versions : [])"
                   :value="version"
                   :key="version"
                   >

@@ -9,6 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
+	"github.com/ttrnecka/agent_poc/webapi/db"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 type Policy struct {
@@ -17,7 +20,7 @@ type Policy struct {
 }
 
 func (h *Handler) PolicyApiHandler(w http.ResponseWriter, r *http.Request) {
-	policies, err := h.DB.GetAllPolicies(r.Context())
+	policies, err := db.Policies().Find(r.Context(), bson.D{})
 	if err != nil {
 		http.Error(w, "Failed to fetch policies", http.StatusInternalServerError)
 		return

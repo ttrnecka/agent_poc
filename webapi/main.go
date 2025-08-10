@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -41,20 +40,14 @@ func main() {
 	sessionManager.Cookie.Secure = false // Set to true in production
 
 	// db
-
-	dB, err := db.Connect()
+	err := db.Init()
 	if err != nil {
 		logger.Fatal().Err(err).Msg("")
 	}
 
-	// Ensure all indexes before starting application logic
-	if err := db.EnsureUserCollection(dB); err != nil {
-		log.Fatal("Failed to ensure indexes:", err)
-	}
-
 	srv := &http.Server{
 		Addr:    ":8888",
-		Handler: router(dB),
+		Handler: router(),
 	}
 
 	err = srv.ListenAndServe()
@@ -72,12 +65,12 @@ func commonApiMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func router(dB *db.DB) http.Handler {
+func router() http.Handler {
 	// mux := http.NewServeMux()
 	r := NewMiddlewareRouter()
 
-	handler := api.NewHandler(dB)
-	cHandler := NewCoreHandler(dB)
+	handler := api.NewHandler()
+	cHandler := NewCoreHandler()
 
 	//api
 	r.Handle("/api/v1/policy", http.HandlerFunc(handler.PolicyApiHandler))
@@ -110,11 +103,10 @@ func router(dB *db.DB) http.Handler {
 }
 
 type coreHandler struct {
-	DB *db.DB
 }
 
-func NewCoreHandler(db *db.DB) *coreHandler {
-	return &coreHandler{DB: db}
+func NewCoreHandler() *coreHandler {
+	return &coreHandler{}
 }
 
 // no index
@@ -137,8 +129,7 @@ func (c *coreHandler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	ctx := context.Background()
-	userCRUD := cdb.NewCRUD[db.User](c.DB.Database(), "users")
-	user, err := userCRUD.GetByField(ctx, "username", username)
+	user, err := db.Users().GetByField(ctx, "username", username)
 
 	// TODO add user not found check
 	if err != nil {
