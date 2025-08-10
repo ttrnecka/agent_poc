@@ -1,6 +1,6 @@
 <template>
   <div class="container-fluid">
-    <p v-if="!apiStore.collectors">{{ loadedMessage }}</p>
+    <p v-if="!apiStore.sortedCollectors">{{ loadedMessage }}</p>
     <div v-else class="row">
       <div class="col-auto" style="flex: 0 0 200px;">
       </div>
@@ -11,26 +11,26 @@
             v-for="(collector,idx) in apiStore.collectors"
             :key="idx"
           >
-            <h2 class="accordion-header" :id="`heading-${collector.key}`">
+            <h2 class="accordion-header" :id="`heading-${collector.name}`">
               <button
                 class="accordion-button collapsed"
                 type="button"
                 data-bs-toggle="collapse"
-                :data-bs-target="`#collapse-${collector.key}`"
+                :data-bs-target="`#collapse-${collector.name}`"
                 aria-expanded="false"
-                :aria-controls="`collapse-${collector.key}`"
+                :aria-controls="`collapse-${collector.name}`"
               >
-                {{ collector.key }}
+                {{ collector.name }}
               </button>
             </h2>
             <div
-              :id="`collapse-${collector.key}`"
+              :id="`collapse-${collector.name}`"
               class="accordion-collapse collapse"
-              :aria-labelledby="`heading-${collector.key}`"
+              :aria-labelledby="`heading-${collector.name}`"
               data-bs-parent="#collectorsAccordion"
             >
               <div class="accordion-body">
-                <Collector :collector="collector.key" :accordion-id="collector.key" />
+                <Collector :collector="collector.name" :accordion-id="collector.name" />
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ const loadedMessage = computed(() => {
         </thead>
         <tbody>
           <tr v-for="(coll, index) in apiStore.collectors" :key="index">
-            <td>{{coll.key}}</td>
+            <td>{{coll.name}}</td>
             <td>{{coll.status || collectorStatus}}</td>
           </tr>
         </tbody>

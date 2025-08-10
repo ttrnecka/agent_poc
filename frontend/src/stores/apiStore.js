@@ -16,7 +16,7 @@ export const useApiStore = defineStore('api', () => {
   const collectors = ref(null)
   const fetchError = ref(null)
   
-  const sortedCollectors = computed(() => collectors.value.sort((a, b) => a.key.localeCompare(b.key, undefined, { sensitivity: 'base' })))
+  const sortedCollectors = computed(() => collectors.value.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })))
 
   function reload() {
     loadCollectors()
