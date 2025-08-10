@@ -61,6 +61,9 @@ func (m *MessageHandler) Start() {
 	}
 	go m.readLoop()
 	go m.processLoop()
+
+	// initial refresh
+	go refresh()
 }
 
 // should only be called when wanting to intentially Stop the handler

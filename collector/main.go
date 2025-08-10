@@ -41,18 +41,6 @@ func main() {
 	// this allows the program to gracefully shut down when it receives an interrupt signal
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	watcher := NewWatcher(*watchPath)
-
-	// run the initial refresh in nonblocking fashion
-	go func() {
-		err := refresh()
-		if err != nil {
-			logger.Error().Err(err).Msg("")
-		}
-	}()
-
-	go watcher.Start()
-
 	messageHandler := NewMessageHandler(*addr, *source, *watchPath)
 
 	go func() {
