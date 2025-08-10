@@ -3,7 +3,7 @@ agent_poc/.vscode
 agent_poc/dist
 collector/bin
 collector/logs
-db/
+/db/
 logs/
 uploads/
 .vscode/

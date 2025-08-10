@@ -62,8 +62,14 @@ async function loginUser(username,password) {
     router.push('/')
    } catch (err) {
     const error = err.response?.data?.message || err.message;
+    const status = err.response?.status;
+
     console.error(`API error: ${error}`);
-    alert('Error logging in')
+    if (status === 401) {
+      alert("Invalid credentials")
+    } else { 
+     alert(`Error logging in: ${error}`)
+    }
   }
 }
   return { loggedIn,user, isLoggedIn, getData, setLoggedIn, fetchUser, logoutUser, loginUser}
