@@ -167,12 +167,12 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, ok := sessionManager.Get(r.Context(), "user").(User)
+	user, ok := sessionManager.Get(r.Context(), "user").(db.User)
 	if !ok {
 		http.Error(w, "type assertion to User failed", http.StatusInternalServerError)
 	}
 
-	json.NewEncoder(w).Encode(user.GetResponse())
+	json.NewEncoder(w).Encode(user)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {

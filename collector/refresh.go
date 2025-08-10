@@ -1,18 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
-
-	"github.com/ttrnecka/agent_poc/webapi/api"
 )
 
 // functions handling refresh process
@@ -24,46 +19,16 @@ func refresh() error {
 	refreshMU.Lock()
 	defer refreshMU.Unlock()
 
-	jar, err := cookiejar.New(nil)
+	err := ApiLogin()
 	if err != nil {
-		logger.Error().Err(err).Msg("")
+		logger.Error().Err(err).Msg("Refresh failed")
 		return err
 	}
-	client := &http.Client{
-		Jar: jar,
-	}
 
-	form := url.Values{}
-	form.Set("username", "test")
-	form.Set("password", "test")
-
-	resp, err := client.PostForm(fmt.Sprintf("http://%s/api/login", *addr), form)
-	if err != nil {
-		logger.Error().Err(err).Msg("")
-		return err
-	}
-	resp.Body.Close()
-
-	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
 	logger.Info().Msg("Refreshing probes")
-
-	req, err := http.NewRequest("GET", requestURL, nil)
+	probes, err := ApiGetProbes()
 	if err != nil {
-		logger.Error().Err(err).Msg("")
-		return err
-	}
-
-	resp2, err := client.Do(req)
-	if err != nil {
-		logger.Error().Err(err).Msg("Probe refresh failure")
-		return err
-	}
-	defer resp2.Body.Close()
-
-	var probes []api.Probe
-	err = json.NewDecoder(resp2.Body).Decode(&probes)
-	if err != nil {
-		logger.Error().Err(err).Msg("Probe body read failure")
+		logger.Error().Err(err).Msg("Refresh failed")
 		return err
 	}
 
@@ -97,7 +62,7 @@ func refresh() error {
 			policy_name := fmt.Sprintf("%s_%s", name, version)
 			file_name := fmt.Sprintf("bin/%s", policy_name)
 			if _, err := os.Stat(file_name); err != nil {
-				err = downloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version), client)
+				err = downloadFile(file_name, fmt.Sprintf("http://%s/api/v1/policy/%s/%s", *addr, name, version), httpClient)
 				if err != nil {
 					logger.Error().Err(err).Str("file", policy_name).Msg("Error downloading policy")
 				}
@@ -107,18 +72,11 @@ func refresh() error {
 		}
 	}
 
-	requestURL = fmt.Sprintf("http://%s/api/logout", *addr)
-	req, err = http.NewRequest("GET", requestURL, nil)
+	err = ApiLogout()
 	if err != nil {
-		logger.Error().Err(err).Msg("")
+		logger.Error().Err(err).Msg("Logout failed")
 		return err
 	}
-
-	resp3, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp3.Body.Close()
 	return nil
 }
 
