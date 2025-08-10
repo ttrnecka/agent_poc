@@ -37,7 +37,7 @@ function connectWebSocket () {
   conn.onopen = function (evt) {
     console.log('WebSocket connected');
     reconnectAttempts = 0;
-    sendMessage(MESSAGE_TYPE.ONLINE, null, "web_client connected", null);
+    sendMessage(MESSAGE_TYPE.COLLECTOR_ONLINE, null, "web_client connected", null);
 
   };
 

@@ -55,7 +55,7 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  const session = sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
+  const session = sendMessage(MESSAGE_TYPE.PROBE_START, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";
@@ -64,7 +64,7 @@ function runProbe(probe) {
 }
 
 function validateProbe(probe) {
-  const session = sendMessage(MESSAGE_TYPE.RUN, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
+  const session = sendMessage(MESSAGE_TYPE.PROBE_START, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
   state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";
@@ -82,10 +82,10 @@ watch(sessionData, (newData) => {
   if (newData) {
     console.log(`New message for session ${state.value.task.session}:`, newData);
     state.value.task.message = newData.Text;
-    if (newData.Type == MESSAGE_TYPE.FINISHED_ERR) {
+    if (newData.Type == MESSAGE_TYPE.PROBE_FINISHED_ERR) {
       state.value.task.state = "ERROR";
     }
-    if (newData.Type == MESSAGE_TYPE.FINISHED_OK) {
+    if (newData.Type == MESSAGE_TYPE.PROBE_FINISHED_OK) {
       state.value.task.state = "FINISHED";
     }
     // Handle message logic here

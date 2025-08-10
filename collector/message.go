@@ -130,10 +130,10 @@ func (m *MessageHandler) processLoop() {
 			// TODO needs to make this into pool of worker or as go routines
 			logger.Debug().Str("raw", fmt.Sprintf("%+v", msg)).Msg("Websocket message received")
 			if msg.Destination == m.id {
-				if msg.Type == ws.MSG_REFRESH {
+				if msg.Type == ws.MSG_POLICY_REFRESH {
 					refresh()
 				}
-				if msg.Type == ws.MSG_RUN {
+				if msg.Type == ws.MSG_PROBE_START {
 					run(msg.Message, m)
 					m.watcher.Process()
 				}
@@ -153,7 +153,7 @@ func (m *MessageHandler) closeWebSocket() {
 
 	logger.Info().Msg("Sending offline message")
 
-	err := m.SendMessage(ws.NewMessage(ws.MSG_OFFLINE, m.id, "hub", "Collector is going offline"))
+	err := m.SendMessage(ws.NewMessage(ws.MSG_COLLECTOR_OFFLINE, m.id, "hub", "Collector is going offline"))
 	if err == nil {
 		logger.Info().Msg("Offline message sent. Sending WS close message")
 	}
@@ -177,7 +177,7 @@ func (m *MessageHandler) closeWebSocket() {
 func (m *MessageHandler) sendHeartbeat() error {
 	logger.Debug().Msg("Sending heartbeat message")
 
-	err := m.SendMessage(ws.NewMessage(ws.MSG_ONLINE, m.id, "hub", "Collector is online"))
+	err := m.SendMessage(ws.NewMessage(ws.MSG_COLLECTOR_ONLINE, m.id, "hub", "Collector is online"))
 	if err != nil {
 		return err
 	}

@@ -10,26 +10,26 @@ type MessageType = int
 
 // collector messages
 const (
-	MSG_ONLINE  MessageType = iota + 1 // collector online announcement
-	MSG_OFFLINE                        // collector offline announcement
+	MSG_COLLECTOR_ONLINE  MessageType = iota + 1 // collector online announcement
+	MSG_COLLECTOR_OFFLINE                        // collector offline announcement
+)
+
+// policy messages
+const (
+	MSG_POLICY_REFRESH MessageType = iota + 10 // policy refresh signal
 )
 
 // probe messages
 const (
-	MSG_REFRESH MessageType = iota + 10 // probe refresh signal
-)
-
-// session messages
-const (
-	MSG_RUN          MessageType = iota + 20 // run probe signal
-	MSG_RUNNING                              // probe is running
-	MSG_FINISHED_OK                          // probe finished ok
-	MSG_FINISHED_ERR                         // probe finished with error
-	MSG_DATA
+	MSG_PROBE_START        MessageType = iota + 20 // start probe signal
+	MSG_PROBE_RUNNING                              // probe is running
+	MSG_PROBE_FINISHED_OK                          // probe finished ok
+	MSG_PROBE_FINISHED_ERR                         // probe finished with error
+	MSG_PROBE_DATA
 )
 
 type Message struct {
-	Type        int
+	Type        MessageType
 	Source      string
 	Destination string
 	Text        string

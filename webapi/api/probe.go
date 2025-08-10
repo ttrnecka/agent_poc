@@ -94,7 +94,7 @@ func (h *Handler) saveProbes(r io.Reader) error {
 	// once saved we broadcast the new probes to all connected clients
 	hub := ws.GetHub()
 	for collector := range collectors {
-		bmessage, err := json.Marshal(ws.NewMessage(ws.MSG_REFRESH, "hub", collector, "Policy updated"))
+		bmessage, err := json.Marshal(ws.NewMessage(ws.MSG_POLICY_REFRESH, "hub", collector, "Policy updated"))
 		if err != nil {
 			return fmt.Errorf("failed to marshal message: %v", err)
 		}

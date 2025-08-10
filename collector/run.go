@@ -98,10 +98,10 @@ func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult
 		case cr := <-result:
 			// TODO: return out of this branch needs to handle local message persistence in case we need to resend it
 			text := "Request succeeded"
-			mc := ws.MSG_FINISHED_OK
+			mc := ws.MSG_PROBE_FINISHED_OK
 			if cr.Code != 0 {
 				text = "Request failed"
-				mc = ws.MSG_FINISHED_ERR
+				mc = ws.MSG_PROBE_FINISHED_ERR
 			}
 			m := ws.NewMessage(mc, *source, mes.Source, text)
 			m.Session = mes.Session
@@ -126,7 +126,7 @@ func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult
 			}
 
 			// sb.WriteString(fmt.Sprintf("Exit Code: %d", cr.Code))
-			m = ws.NewMessage(ws.MSG_DATA, *source, mes.Source, sb.String())
+			m = ws.NewMessage(ws.MSG_PROBE_DATA, *source, mes.Source, sb.String())
 			m.Session = mes.Session
 
 			logger.Info().Str("raw", fmt.Sprintf("%+v", m)).Msg("Sending DATA message")
@@ -138,7 +138,7 @@ func runNotifyLoop(mes ws.Message, mh *MessageHandler, result chan CommandResult
 			return
 		case <-ticker.C:
 			// TODO this will just send a message, it would be nice if we can stream the logs here
-			m := ws.NewMessage(ws.MSG_RUNNING, *source, mes.Source, "Request in progress...")
+			m := ws.NewMessage(ws.MSG_PROBE_RUNNING, *source, mes.Source, "Request in progress...")
 			m.Session = mes.Session
 
 			logger.Info().Str("raw", fmt.Sprintf("%+v", m)).Msg("Sending RUNNING message")
