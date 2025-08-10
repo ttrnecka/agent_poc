@@ -100,7 +100,7 @@ export const useApiStore = defineStore('api', () => {
   }
 
   function updateCollectorStatus(collector,status) {
-    collectors.value && (collectors.value.find((elm) => elm.key === collector).status = status);
+    collectors.value && (collectors.value.find((elm) => elm.name === collector).status = status);
   }
 
 
