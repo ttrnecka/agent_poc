@@ -15,10 +15,13 @@ type Watcher struct {
 	mu        sync.Mutex
 }
 
-func NewWatcher(path string, queue *UploadQueue) *Watcher {
+func NewWatcher(path string) *Watcher {
+
+	uploadQueue := NewUploadQueue(10) // 10 workers
+
 	return &Watcher{
 		watchRoot: path,
-		queue:     queue,
+		queue:     uploadQueue,
 		process:   make(chan struct{}),
 		done:      make(chan struct{}),
 	}
@@ -30,6 +33,7 @@ func (rw *Watcher) Start() {
 
 func (rw *Watcher) Stop() {
 	close(rw.done)
+	rw.queue.Stop()
 }
 
 func (rw *Watcher) Process() {

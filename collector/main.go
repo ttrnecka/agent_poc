@@ -41,9 +41,7 @@ func main() {
 	// this allows the program to gracefully shut down when it receives an interrupt signal
 	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
 
-	// kick off uploader/watcher
-	uploadQueue := NewUploadQueue(10) // 10 workers
-	watcher := NewWatcher(*watchPath, uploadQueue)
+	watcher := NewWatcher(*watchPath)
 
 	// run the initial refresh in nonblocking fashion
 	go func() {
@@ -55,7 +53,7 @@ func main() {
 
 	go watcher.Start()
 
-	messageHandler := NewMessageHandler(*addr, *source, watcher)
+	messageHandler := NewMessageHandler(*addr, *source, *watchPath)
 
 	go func() {
 		reconnectDelay := 5 // seconds
@@ -75,6 +73,4 @@ func main() {
 	<-interrupt
 	logger.Info().Msg("Received interrupt signal")
 	messageHandler.Stop()
-	watcher.Stop()
-	uploadQueue.Stop()
 }

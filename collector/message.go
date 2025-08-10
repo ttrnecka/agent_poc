@@ -24,13 +24,14 @@ type MessageHandler struct {
 	watcher  *Watcher
 	ticker   *time.Ticker
 	mu       sync.Mutex
+	dest     string
 }
 
-func NewMessageHandler(addr, id string, watcher *Watcher) *MessageHandler {
+func NewMessageHandler(addr, id string, dest string) *MessageHandler {
 	h := &MessageHandler{
-		addr:    addr,
-		id:      id,
-		watcher: watcher,
+		addr: addr,
+		id:   id,
+		dest: dest,
 	}
 
 	return h
@@ -45,6 +46,10 @@ func (m *MessageHandler) Start() {
 	m.done = make(chan struct{})
 	m.messages = make(chan Message, 100)
 	m.ticker = time.NewTicker(5 * time.Second)
+
+	m.watcher = NewWatcher(m.dest)
+	go m.watcher.Start()
+
 	err := m.connectWebSocket()
 	if err != nil {
 		logger.Error().Err(err).Msg("Error opening websocket")
@@ -71,7 +76,7 @@ func (m *MessageHandler) Stop() {
 func (m *MessageHandler) cleanup() {
 	close(m.messages)
 	m.ticker.Stop()
-	m.watcher = nil
+	m.watcher.Stop()
 	if m.c != nil {
 		m.c.Close()
 	}

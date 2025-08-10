@@ -242,6 +242,7 @@ func processFolder(src_folder, dest_folder, collector, policy, probeId string) {
 	if err != nil {
 		logger.Error().Err(err).Msgf("failed to rename file: %s", zipFilePath)
 	}
+	logger.Info().Msgf("ZIP moved to %s", dstPath)
 }
 
 func parseFilename(input string) (timestamp, device, rest string, err error) {
