@@ -76,6 +76,7 @@ func router() http.Handler {
 	r.Handle("/api/v1/policy", http.HandlerFunc(handler.PolicyApiHandler))
 	r.Handle("/api/v1/policy/", http.HandlerFunc(api.PolicyItemApiHandler))
 	r.Handle("/api/v1/probe", http.HandlerFunc(handler.ProbeApiHandler))
+	r.Handle("/api/v1/probe/", http.HandlerFunc(handler.ProbeApiHandler))
 	r.Handle("/api/v1/collector", http.HandlerFunc(handler.CollectorApiHandler))
 	r.Handle("/api/v1/data/collector/", http.HandlerFunc(api.DataHandler))
 	r.Handle("/api/v1/data/collector", http.HandlerFunc(api.DataHandler)) // handles no trailing slash too

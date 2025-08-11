@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import axios from 'axios'
 
 const POLICY_ENDPOINT="/api/v1/policy"
 const PROBE_ENDPOINT="/api/v1/probe"
@@ -11,9 +12,9 @@ const deviceEndpoint = (collector,device) => `${COLLECTOR_ENDPOINT}${collector}/
 const endpointEndpoint = (collector,device,endpoint) => `${COLLECTOR_ENDPOINT}${collector}/${device}/${endpoint}`
 
 export const useApiStore = defineStore('api', () => {
-  const policies = ref(null)
-  const probes = ref(null)
-  const collectors = ref(null)
+  const policies = ref([])
+  const probes = ref([])
+  const collectors = ref([])
   const fetchError = ref(null)
   
   const sortedCollectors = computed(() => collectors.value.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })))
@@ -64,39 +65,53 @@ export const useApiStore = defineStore('api', () => {
     await load(COLLECTORS_ENDPOINT,collectors)
   }
 
-  async function saveProbes(data) {
+  async function deleteProbe(probeId) {
     try {
-      if (!probes.value) {
-        probes.value = []
-      }
-      // new probe
-      if (!data.id) {
-        probes.value.push(data)
-      } // update probe
-      else {
+      await axios.delete(`${PROBE_ENDPOINT}/${probeId}`)
+      probes.value = probes.value.filter(obj => obj.id !== probeId)
+    }
+    catch (error) {
+      console.error("Error:", error);
+      return false
+    }
+  }
+
+  async function saveProbe(probe) {
+    if (probe.id) {
+      probe = await post(`${PROBE_ENDPOINT}/${probe.id}`, probe)
+      if (probe) {
         for (let i in probes.value) {
-          if (probes.value[i].id == data.id) {
-            probes.value[i] = data
+          if (probes.value[i].id == probe.id) {
+            probes.value[i] = probe
           }
         }
+        return true
       }
-      const response = await fetch(PROBE_ENDPOINT, {
-        method: "POST",
+      return false
+    }
+    // new probe
+    probe = await post(PROBE_ENDPOINT, probe)
+    if (probe) { 
+      probes.value.push(probe)
+      return true
+    }
+    return false
+  }
+
+  async function post(endpoint,data) {
+    try {
+      const response = await axios.post(endpoint, data, {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(probes.value),
       });
   
-      if (!response.ok) {
-        throw new Error(`Error! status: ${response.status}`);
-      }
       console.log("Success:", response.status);
+      return response.data
     } catch (error) {
       console.error("Error:", error);
       return false
     }
-    return true
   }
 
   function updateCollectorStatus(collector,status) {
@@ -104,6 +119,9 @@ export const useApiStore = defineStore('api', () => {
   }
 
 
-  return { policies, loadPolicies, probes, loadProbes, saveProbes, fetchError, collectors, sortedCollectors, loadCollectors, updateCollectorStatus,
-           endpointEndpoint, deviceEndpoint, collectorEndpoint, reload }
+  function getCollector(id) {
+    return collectors.value.find((o) => o.id === id)
+  }
+  return { policies, loadPolicies, probes, loadProbes, saveProbe, fetchError, collectors, sortedCollectors, loadCollectors, updateCollectorStatus,
+           endpointEndpoint, deviceEndpoint, collectorEndpoint, reload, getCollector, deleteProbe }
 });

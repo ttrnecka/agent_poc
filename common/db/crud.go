@@ -21,6 +21,10 @@ type BaseModel struct {
 	DeletedAt *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
 }
 
+type SetCreatedUpdateder interface {
+	SetCreatedUpdated()
+}
+
 func (m *BaseModel) SetCreatedUpdated() {
 	now := time.Now()
 	if m.CreatedAt.IsZero() {
@@ -76,6 +80,10 @@ func (c *CRUD[T]) Find(ctx context.Context, filter interface{}, opts ...*options
 	return results, nil
 }
 
+func (c *CRUD[T]) All(ctx context.Context) ([]T, error) {
+	return c.Find(ctx, bson.D{})
+}
+
 func (c *CRUD[T]) GetByField(ctx context.Context, field string, value interface{}) (*T, error) {
 	var result T
 	err := c.Collection.FindOne(ctx, bson.M{
@@ -121,13 +129,19 @@ func (c *CRUD[T]) FindPaginated(ctx context.Context, filter interface{}, page, p
 	return results, count, nil
 }
 
-func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, update interface{}) error {
+func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T) error {
+	update := bson.M{
+		"$set":         doc,
+		"$currentDate": bson.M{"updatedAt": true},
+	}
+	if bm, ok := any(doc).(SetCreatedUpdateder); ok {
+		bm.SetCreatedUpdated()
+		update = bson.M{
+			"$set": doc,
+		}
+	}
 	_, err := c.Collection.UpdateOne(ctx,
-		bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}},
-		bson.M{
-			"$set":         update,
-			"$currentDate": bson.M{"updatedAt": true},
-		})
+		bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}}, update)
 	return err
 }
 

@@ -8,7 +8,7 @@ import { useSessionStore } from '@/stores/sessionStore'
 const newProbe = {
     id: null,
     policy: "",
-    collector: "",
+    collector_id: "",
     version: "",
     address: null,
     port: null,
@@ -47,7 +47,7 @@ function editProbe(probe) {
 }
 
 async function saveProbe() {
-  if (await apiStore.saveProbes(state.value.newProbe)) {
+  if (await apiStore.saveProbe(state.value.newProbe)) {
     state.value.newProbe = newProbe
     state.value.probeModal.hide();
   }
@@ -131,7 +131,7 @@ const stateClass = computed(() => {
         <tbody>
           <tr v-for="(probe, index) in apiStore.probes" @click="editProbe(probe)" :key="index" class="probe-row">
             <th scope="row">{{index+1}}</th>
-            <td>{{probe.collector}}</td>
+            <td>{{apiStore.getCollector(probe.collector_id).name}}</td>
             <td>{{apiStore.policies.find((elm) => elm.name === probe.policy).description}}</td>
             <td>{{probe.version}}</td>
             <td>{{probe.address}}</td>
@@ -150,6 +150,12 @@ const stateClass = computed(() => {
                   class="btn btn-primary btn-sm"
                 >
                   Validate
+                </button>
+                <button
+                  @click.stop="apiStore.deleteProbe(probe.id)"
+                  class="btn btn-primary btn-sm"
+                >
+                  Delete
                 </button>
               </div>
             </td>
@@ -171,9 +177,9 @@ const stateClass = computed(() => {
           <div class="modal-body">
             <form @submit.prevent="saveProbe()">
               <div class="mb-3">
-                <select id="collectorInput" class="form-select form-select-sm" aria-label="Select collector" v-model="state.newProbe.collector">
+                <select id="collectorInput" class="form-select form-select-sm" aria-label="Select collector" v-model="state.newProbe.collector_id">
                   <option selected disabled value="">-- Collector --</option>
-                  <option v-for="coll,index in apiStore.collectors" :value="coll.name" :key="index">{{coll.name}}</option>
+                  <option v-for="coll,index in apiStore.collectors" :value="coll.id" :key="index">{{coll.name}}</option>
                 </select>
               </div>
               <div class="mb-3">
@@ -205,7 +211,7 @@ const stateClass = computed(() => {
                 placeholder="IP or FQDN of the device" title="IP or FQDN of the device">
               </div>
               <div class="mb-3">
-                <input type="text" class="form-control form-control-sm" id="portInput" aria-describedby="portHelp" v-model="state.newProbe.port"
+                <input type="number" class="form-control form-control-sm" id="portInput" aria-describedby="portHelp" v-model="state.newProbe.port"
                 placeholder="Port" title="Port">
               </div>
               <div class="mb-3">
