@@ -20,9 +20,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            set -euo pipefail
             cd /xapoc
             git pull
             sudo docker compose build
-            echo "Build done done"
+            echo "Build done"
             sudo systemctl restart agentpoc
             echo "Systemctl restart done"
