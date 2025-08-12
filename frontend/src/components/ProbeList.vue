@@ -55,8 +55,8 @@ async function saveProbe() {
 }
 
 function runProbe(probe) {
-  const session = sendMessage(MESSAGE_TYPE.PROBE_START, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
-  state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
+  const session = sendMessage(MESSAGE_TYPE.PROBE_START, apiStore.getCollector(probe.collector_id).name, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} collect --endpoint ${probe.address}:${probe.port}`);
+  state.value.task.title = `${apiStore.getCollector(probe.collector_id).name} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - collection`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";
   state.value.task.session = session;
@@ -64,8 +64,8 @@ function runProbe(probe) {
 }
 
 function validateProbe(probe) {
-  const session = sendMessage(MESSAGE_TYPE.PROBE_START, probe.collector, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
-  state.value.task.title = `${probe.collector} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
+  const session = sendMessage(MESSAGE_TYPE.PROBE_START, apiStore.getCollector(probe.collector_id).name, `PROBE_ID="${probe.id}" CLI_USER="${probe.user}" CLI_PASSWORD="${probe.password}" ${probe.policy}_${probe.version} validate --endpoint ${probe.address}:${probe.port}`);
+  state.value.task.title = `${apiStore.getCollector(probe.collector_id).name} - ${probe.policy}_${probe.version} - ${probe.address}:${probe.port} - validation`;
   state.value.task.message = "Waiting for data...";
   state.value.task.state = "RUNNING";
   state.value.task.session = session;
