@@ -17,6 +17,8 @@ npm run build
 # Zscaller
 Use 
 
+```export IMPORT_ZSCALER_CERT=true```
+or 
 ```set IMPORT_ZSCALER_CERT=true```
 
 before starting the docker compose up

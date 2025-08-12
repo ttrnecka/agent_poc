@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+
+	"github.com/ttrnecka/agent_poc/webapi/db"
 )
 
 // functions handling refresh process
@@ -32,10 +34,28 @@ func refresh() error {
 		return err
 	}
 
+	logger.Info().Msg("Getting collectors")
+	collectors, err := ApiGetCollectors()
+	if err != nil {
+		logger.Error().Err(err).Msg("Refresh failed")
+		return err
+	}
+
+	getCollector := func(id string) *db.Collector {
+		var found *db.Collector
+		for i := range collectors {
+			if collectors[i].ID.String() == id {
+				found = &collectors[i]
+				return found
+			}
+		}
+		return nil
+	}
+
 	// process probes and make a list of policies that needs downloading
 	policies := make(map[string][]string)
 	for _, probe := range probes {
-		if probe.Collector == *source {
+		if getCollector(probe.CollectorID.String()).Name == *source {
 			if policies[probe.Policy] == nil {
 				policies[probe.Policy] = []string{probe.Version}
 			} else {

@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: ./nginx/Dockerfile
+      args:
+        IMPORT_ZSCALER_CERT: ${IMPORT_ZSCALER_CERT:-false}
     image: poc_nginx:0.0.1
     ports:
       - 80:80

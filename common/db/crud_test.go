@@ -84,7 +84,8 @@ func TestCRUDOperations(t *testing.T) {
 	assert.Equal(t, "john@example.com", found.Email)
 
 	// --- UpdateByID ---
-	err = userCRUD.UpdateByID(ctx, id, bson.M{"email": "john.doe@example.com"})
+	u1 := &TestUser{Name: "John", Email: "john@example.com"}
+	err = userCRUD.UpdateByID(ctx, id, u1)
 	require.NoError(t, err)
 
 	updated, err := userCRUD.GetByID(ctx, id)

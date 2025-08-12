@@ -110,3 +110,24 @@ func ApiGetProbes() ([]db.Probe, error) {
 	}
 	return probes, nil
 }
+
+func ApiGetCollectors() ([]db.Collector, error) {
+	requestURL := fmt.Sprintf("http://%s/api/v1/collector", *addr)
+	req, err := http.NewRequest("GET", requestURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var collectors []db.Collector
+	err = json.NewDecoder(resp.Body).Decode(&collectors)
+	if err != nil {
+		return nil, err
+	}
+	return collectors, nil
+}
