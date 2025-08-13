@@ -3,96 +3,65 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ttrnecka/agent_poc/webapi/db"
 	"github.com/ttrnecka/agent_poc/webapi/ws"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (h *Handler) ProbeApiHandler(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		probes, err := db.Probes().CRUD().All(r.Context())
-		// probes, err := db.GetProbes(r.Context())
-		if err != nil {
-			logger.Error().Err(err).Msg("")
-			http.Error(w, "Failed to fetch probes", http.StatusInternalServerError)
-			return
-		}
-		if err := json.NewEncoder(w).Encode(probes); err != nil {
-			http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
-			return
-		}
-	case http.MethodPost:
-		p := r.URL.Path
-		var probe_id string
-		switch {
-		case match(p, "/api/v1/probe/+", &probe_id), p == "/api/v1/probe":
-			var probe db.Probe
-			if err := json.NewDecoder(r.Body).Decode(&probe); err != nil {
-				http.Error(w, fmt.Sprintf("Invalid JSON: %s", err), http.StatusBadRequest)
-				return
-			}
-			id, err := probe.UpdateProbe(r.Context())
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": err.Error(),
-				})
-				return
-			}
-			probeTmp, err := db.Probes().CRUD().GetByID(r.Context(), id)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": err.Error(),
-				})
-				return
-			}
-			json.NewEncoder(w).Encode(probeTmp)
-			go h.refreshPolicies()
-			return
-		default:
-			http.Error(w, "Unhandled path", http.StatusInternalServerError)
-			return
-		}
-	case http.MethodDelete:
-		p := r.URL.Path
-		var probe_id string
-		switch {
-		case match(p, "/api/v1/probe/+", &probe_id):
-			id, err := primitive.ObjectIDFromHex(probe_id)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": err.Error(),
-				})
-				return
-			}
-			probe, err := db.Probes().CRUD().GetByID(r.Context(), id)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": err.Error(),
-				})
-				return
-			}
-			err = probe.Delete(r.Context())
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{
-					"error": err.Error(),
-				})
-				return
-			}
-		default:
-			fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
-		}
-	default:
-		fmt.Fprintf(w, "Sorry, only GET and POST methods are supported.")
+func (h *Handler) ProbesApiHandler(c echo.Context) error {
+	probes, err := db.Probes().CRUD().All(c.Request().Context())
+	if err != nil {
+		return err
 	}
+	return c.JSON(http.StatusOK, probes)
+}
+
+func (h *Handler) ProbeCreateUpdateApiHandler(c echo.Context) error {
+	var probe db.Probe
+	if err := json.NewDecoder(c.Request().Body).Decode(&probe); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+	id, err := probe.UpdateProbe(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+
+	}
+	probeTmp, err := db.Probes().CRUD().GetByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	go h.refreshPolicies()
+	return c.JSON(http.StatusOK, probeTmp)
+}
+
+func (h *Handler) ProbeDeleteApiHandler(c echo.Context) error {
+	probe_id := c.Param("id")
+	id, err := primitive.ObjectIDFromHex(probe_id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	probe, err := db.Probes().CRUD().GetByID(c.Request().Context(), id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	err = probe.Delete(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *Handler) refreshPolicies() {

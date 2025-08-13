@@ -44,12 +44,12 @@ type Client struct {
 // ServeWs handles WebSocket requests from clients. It upgrades the HTTP connection to a WebSocket,
 // creates a new client instance with a buffered send channel, registers the client with the hub,
 // and starts goroutines for reading from and writing to the WebSocket connection.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) error {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error().Err(err).Msg("")
-		return
+		return err
 	}
 
 	logger.Info().Str("client", conn.RemoteAddr().String()).Msg("Websocket client opened conenction")
@@ -58,6 +58,7 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	go client.writePump()
 	go client.readPump()
+	return nil
 }
 
 // setupPongHandler sets a custom Pong handler for the given WebSocket connection.

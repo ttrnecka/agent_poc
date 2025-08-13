@@ -1,22 +1,18 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/ttrnecka/agent_poc/webapi/db"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (h *Handler) CollectorApiHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CollectorsApiHandler(c echo.Context) error {
 
-	collectors, err := db.Collectors().Find(r.Context(), bson.D{})
+	collectors, err := db.Collectors().Find(c.Request().Context(), bson.D{})
 	if err != nil {
-		http.Error(w, "Failed to fetch collectors", http.StatusInternalServerError)
-		return
+		return err
 	}
-	if err := json.NewEncoder(w).Encode(collectors); err != nil {
-		http.Error(w, "Failed to encode JSON", http.StatusInternalServerError)
-		return
-	}
+	return c.JSON(http.StatusOK, collectors)
 }

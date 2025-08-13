@@ -12,19 +12,6 @@ func NewHandler() *Handler {
 	return &Handler{}
 }
 
-// func output(file string) string {
-// 	cmd_file := fmt.Sprintf("data/api/%s", file)
-// 	if _, err := os.Stat(cmd_file); os.IsNotExist(err) {
-// 		return fmt.Sprintf("error: file %s does not exist", cmd_file)
-// 	}
-
-// 	b, err := os.ReadFile(cmd_file) // just pass the file name
-// 	if err != nil {
-// 		logger.Error().Err(err).Msg("")
-// 	}
-// 	return string(b)
-// }
-
 // match reports whether path matches the given pattern, which is a
 // path with '+' wildcards wherever you want to use a parameter. Path
 // parameters are assigned to the pointers in vars (len(vars) must be
