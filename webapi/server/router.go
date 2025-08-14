@@ -33,8 +33,10 @@ func Router() *echo.Echo {
 
 	ahandler := api.NewApiHandler()
 
+	collectorHandler := handler.NewCollectorHandler(service.NewCollectorService(repository.NewCollectorRepository(entity.Collectors())))
+
 	api := e.Group("/api/v1", mid.AuthMiddleware)
-	api.GET("/collector", ahandler.CollectorsApiHandler)
+	api.GET("/collector", collectorHandler.Collectors)
 	api.GET("/policy", ahandler.PoliciesApiHandler)
 	api.GET("/probe", ahandler.ProbesApiHandler)
 	api.POST("/probe", ahandler.ProbeCreateUpdateApiHandler)
