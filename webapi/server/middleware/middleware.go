@@ -14,7 +14,7 @@ func SessionManager() echo.MiddlewareFunc {
 
 			sess, err := session.Get(SESSION_STORE, c)
 			if err != nil {
-				return c.String(http.StatusInternalServerError, "failed to get session")
+				return echo.NewHTTPError(http.StatusInternalServerError, "failed to get session:", err)
 			}
 			sess.Options = &sessions.Options{
 				Path:     "/",

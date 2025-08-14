@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/db"
+	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
 	"github.com/ttrnecka/agent_poc/webapi/server"
 
 	logging "github.com/ttrnecka/agent_poc/logger"
@@ -19,7 +20,7 @@ func init() {
 
 func main() {
 	// Needed for storing structs in sessions
-	gob.Register(db.User{})
+	gob.Register(dto.UserDTO{})
 
 	// db
 	err := db.Init()

@@ -3,13 +3,14 @@ package db
 import (
 	"github.com/rs/zerolog"
 	logging "github.com/ttrnecka/agent_poc/logger"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var logger zerolog.Logger
 var dB *DB
 
-func Database() *DB {
-	return dB
+func Database() *mongo.Database {
+	return dB.database
 }
 
 func init() {

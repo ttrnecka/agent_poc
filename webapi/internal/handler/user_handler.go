@@ -6,18 +6,20 @@ import (
 
 	"github.com/labstack/echo/v4"
 	cdb "github.com/ttrnecka/agent_poc/common/db"
-	"github.com/ttrnecka/agent_poc/webapi/db"
+	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
+	"github.com/ttrnecka/agent_poc/webapi/internal/mapper"
+	"github.com/ttrnecka/agent_poc/webapi/internal/service"
 	"github.com/ttrnecka/agent_poc/webapi/server/middleware"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
-	// service service.UserService
+	service service.UserService
 }
 
-// func NewUserHandler(s service.UserService) *UserHandler {
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(s service.UserService) *UserHandler {
+	// func NewUserHandler() *UserHandler {
+	return &UserHandler{s}
 }
 
 func (e *UserHandler) LoginUser(c echo.Context) error {
@@ -25,7 +27,7 @@ func (e *UserHandler) LoginUser(c echo.Context) error {
 	username := c.FormValue("username")
 	password := c.FormValue("password")
 
-	user, err := db.Users().GetByField(c.Request().Context(), "username", username)
+	user, err := e.service.GetByName(c.Request().Context(), username)
 
 	if err != nil {
 		logger.Error().Err(err).Msg("")
@@ -38,13 +40,14 @@ func (e *UserHandler) LoginUser(c echo.Context) error {
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)) != nil {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
+	userDTO := mapper.ToUserDTO(*user)
 
 	sess := middleware.Session(c)
-	sess.Values["user"] = user
+	sess.Values["user"] = userDTO
 	if saveErr := sess.Save(c.Request(), c.Response()); saveErr != nil {
 		return saveErr
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": "Login successful", "user": user.Username})
+	return c.JSON(http.StatusOK, map[string]string{"message": "Login successful", "user": userDTO.Username})
 }
 
 func (e *UserHandler) LogoutUser(c echo.Context) error {
@@ -58,24 +61,9 @@ func (e *UserHandler) LogoutUser(c echo.Context) error {
 
 func (e *UserHandler) User(c echo.Context) error {
 	sess := middleware.Session(c)
-	user, ok := sess.Values["user"].(db.User)
+	user, ok := sess.Values["user"].(dto.UserDTO)
 	if !ok {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Incorrect user in session, assertion failed")
 	}
 	return c.JSON(http.StatusOK, user)
 }
-
-// func (h *UserHandler) CreateUser(c echo.Context) error {
-// 	var req dto.CreateUserRequest
-// 	if err := c.Bind(&req); err != nil {
-// 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-// 	}
-
-// 	userEntity := mapper.ToUserEntity(req)
-// 	createdUser, err := h.service.Create(userEntity)
-// 	if err != nil {
-// 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-// 	}
-
-// 	return c.JSON(http.StatusCreated, mapper.ToUserResponse(createdUser))
-// }

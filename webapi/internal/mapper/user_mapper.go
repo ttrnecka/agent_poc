@@ -1,0 +1,25 @@
+package mapper
+
+import (
+	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
+	"github.com/ttrnecka/agent_poc/webapi/internal/entity"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+func ToUserEntity(u dto.UserDTO) entity.User {
+	user := entity.User{
+		Username: u.Username,
+		Email:    u.Email,
+		Password: u.Password,
+	}
+	user.ID, _ = primitive.ObjectIDFromHex(u.ID)
+	return user
+}
+
+func ToUserDTO(user entity.User) dto.UserDTO {
+	return dto.UserDTO{
+		ID:       user.ID.String(),
+		Username: user.Username,
+		Email:    user.Email,
+	}
+}

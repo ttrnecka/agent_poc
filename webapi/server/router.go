@@ -6,7 +6,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/ttrnecka/agent_poc/webapi/api"
+	"github.com/ttrnecka/agent_poc/webapi/internal/entity"
 	"github.com/ttrnecka/agent_poc/webapi/internal/handler"
+	"github.com/ttrnecka/agent_poc/webapi/internal/repository"
+	"github.com/ttrnecka/agent_poc/webapi/internal/service"
 	mid "github.com/ttrnecka/agent_poc/webapi/server/middleware"
 )
 
@@ -19,7 +22,7 @@ func Router() *echo.Echo {
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(mid.SessionManager())
 
-	userHandler := handler.NewUserHandler()
+	userHandler := handler.NewUserHandler(service.NewUserService(repository.NewUserRepository(entity.Users())))
 
 	e.POST("/api/login", userHandler.LoginUser)
 	e.GET("/api/logout", userHandler.LogoutUser)
