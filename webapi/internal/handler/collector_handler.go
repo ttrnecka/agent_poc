@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ttrnecka/agent_poc/webapi/internal/mapper"
 	"github.com/ttrnecka/agent_poc/webapi/internal/service"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 )
 
 type CollectorHandler struct {
@@ -21,5 +23,9 @@ func (h *CollectorHandler) Collectors(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, collectors)
+	var collectorsDTO []dto.CollectorDTO
+	for _, col := range collectors {
+		collectorsDTO = append(collectorsDTO, mapper.ToCollectorDTO(col))
+	}
+	return c.JSON(http.StatusOK, collectorsDTO)
 }

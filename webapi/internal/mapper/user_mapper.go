@@ -18,7 +18,7 @@ func ToUserEntity(u dto.UserDTO) entity.User {
 
 func ToUserDTO(user entity.User) dto.UserDTO {
 	return dto.UserDTO{
-		ID:       user.ID.String(),
+		ID:       user.ID.Hex(),
 		Username: user.Username,
 		Email:    user.Email,
 	}

@@ -26,7 +26,11 @@ func (h *ProbeHandler) Probes(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, probes)
+	var probesDTO []dto.ProbeDTO
+	for _, probe := range probes {
+		probesDTO = append(probesDTO, mapper.ToProbeDTO(probe))
+	}
+	return c.JSON(http.StatusOK, probesDTO)
 }
 
 func (h *ProbeHandler) DeleteProbe(c echo.Context) error {
@@ -61,7 +65,7 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 		})
 
 	}
-	probeTmp, err := h.service.GetProbe(c.Request().Context(), id.String())
+	probeTmp, err := h.service.GetProbe(c.Request().Context(), id.Hex())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),

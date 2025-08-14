@@ -22,13 +22,13 @@ func ToProbeEntity(p dto.ProbeDTO) entity.Probe {
 
 func ToProbeDTO(p entity.Probe) dto.ProbeDTO {
 	return dto.ProbeDTO{
-		ID:          p.ID.String(),
+		ID:          p.ID.Hex(),
 		Policy:      p.Policy,
 		Version:     p.Version,
 		Address:     p.Address,
 		Port:        p.Port,
 		User:        p.User,
 		Password:    p.Password,
-		CollectorID: p.CollectorID.String(),
+		CollectorID: p.CollectorID.Hex(),
 	}
 }

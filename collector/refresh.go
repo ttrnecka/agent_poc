@@ -55,7 +55,7 @@ func refresh() error {
 	// process probes and make a list of policies that needs downloading
 	policies := make(map[string][]string)
 	for _, probe := range probes {
-		if getCollector(probe.CollectorID.String()).Name == *source {
+		if getCollector(probe.CollectorID.Hex()).Name == *source {
 			if policies[probe.Policy] == nil {
 				policies[probe.Policy] = []string{probe.Version}
 			} else {

@@ -5,7 +5,9 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/ttrnecka/agent_poc/webapi/internal/mapper"
 	"github.com/ttrnecka/agent_poc/webapi/internal/service"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 )
 
 type PolicyHandler struct {
@@ -17,12 +19,15 @@ func NewPolicyHandler(s service.PolicyService) *PolicyHandler {
 }
 
 func (h *PolicyHandler) Policies(c echo.Context) error {
-
 	policies, err := h.service.All(c.Request().Context())
 	if err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, policies)
+	var policiesDTO []dto.PolicyDTO
+	for _, pol := range policies {
+		policiesDTO = append(policiesDTO, mapper.ToPolicyDTO(pol))
+	}
+	return c.JSON(http.StatusOK, policiesDTO)
 }
 
 func (h *PolicyHandler) PolicyFile(c echo.Context) error {

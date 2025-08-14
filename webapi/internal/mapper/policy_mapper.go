@@ -19,7 +19,7 @@ func ToPolicyEntity(p dto.PolicyDTO) entity.Policy {
 
 func ToPolicyDTO(p entity.Policy) dto.PolicyDTO {
 	return dto.PolicyDTO{
-		ID:          p.ID.String(),
+		ID:          p.ID.Hex(),
 		Name:        p.Name,
 		Description: p.Description,
 		FileName:    p.FileName,
