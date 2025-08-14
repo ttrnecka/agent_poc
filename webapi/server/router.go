@@ -22,20 +22,37 @@ func Router() *echo.Echo {
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(mid.SessionManager())
 
-	userHandler := handler.NewUserHandler(service.NewUserService(repository.NewUserRepository(entity.Users())))
+	// db layer
+	users := entity.Users()
+	collectors := entity.Collectors()
+	policies := entity.Policies()
+	probes := entity.Probes()
+
+	// repositories
+	usersRepo := repository.NewUserRepository(users)
+	collectorRepo := repository.NewCollectorRepository(collectors)
+	policyRepo := repository.NewPolicyRepository(policies)
+	probeRepo := repository.NewProbeRepository(probes)
+
+	// services
+	userSvc := service.NewUserService(usersRepo)
+	collectorSvc := service.NewCollectorService(collectorRepo)
+	policySvc := service.NewPolicyService(policyRepo)
+	probeSvc := service.NewProbeService(probeRepo, collectorRepo)
+
+	//handlers
+	userHandler := handler.NewUserHandler(userSvc)
+	collectorHandler := handler.NewCollectorHandler(collectorSvc)
+	policyHandler := handler.NewPolicyHandler(policySvc)
+	probeHandler := handler.NewProbeHandler(probeSvc)
+	ahandler := api.NewApiHandler()
+	wsHandler := handler.NewWsHandler()
 
 	e.POST("/api/login", userHandler.LoginUser)
 	e.GET("/api/logout", userHandler.LogoutUser)
 	e.GET("/api/user", userHandler.User, mid.AuthMiddleware)
 
-	wsHandler := handler.NewWsHandler()
 	e.GET("/ws", wsHandler.WS())
-
-	ahandler := api.NewApiHandler()
-
-	collectorHandler := handler.NewCollectorHandler(service.NewCollectorService(repository.NewCollectorRepository(entity.Collectors())))
-	policyHandler := handler.NewPolicyHandler(service.NewPolicyService(repository.NewPolicyRepository(entity.Policies())))
-	probeHandler := handler.NewProbeHandler(service.NewProbeService(repository.NewProbeRepository(entity.Probes())))
 
 	api := e.Group("/api/v1", mid.AuthMiddleware)
 	api.GET("/collector", collectorHandler.Collectors)

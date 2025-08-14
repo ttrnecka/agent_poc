@@ -18,16 +18,19 @@ type ProbeService interface {
 }
 
 type probeService struct {
-	repo  repository.ProbeRepository
-	crepo repository.CollectorRepository
+	probeRepo     repository.ProbeRepository
+	collectorRepo repository.CollectorRepository
 }
 
-func NewProbeService(r repository.ProbeRepository) ProbeService {
-	return &probeService{repo: r}
+func NewProbeService(p repository.ProbeRepository, c repository.CollectorRepository) ProbeService {
+	return &probeService{
+		probeRepo:     p,
+		collectorRepo: c,
+	}
 }
 
 func (s *probeService) All(ctx context.Context) ([]entity.Probe, error) {
-	return s.repo.All(ctx)
+	return s.probeRepo.All(ctx)
 }
 
 func (s *probeService) GetProbe(ctx context.Context, id string) (*entity.Probe, error) {
@@ -35,7 +38,7 @@ func (s *probeService) GetProbe(ctx context.Context, id string) (*entity.Probe, 
 	if err != nil {
 		return nil, err
 	}
-	return s.repo.GetByID(ctx, idp)
+	return s.probeRepo.GetByID(ctx, idp)
 }
 
 func (s *probeService) DeleteProbe(ctx context.Context, id string) error {
@@ -43,19 +46,16 @@ func (s *probeService) DeleteProbe(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return s.repo.HardDeleteByID(ctx, idp)
+	return s.probeRepo.HardDeleteByID(ctx, idp)
 }
 
 func (s *probeService) UpdateProbe(ctx context.Context, probe *entity.Probe) (primitive.ObjectID, error) {
 	if probe.ID.IsZero() {
-		return s.repo.Create(ctx, probe)
+		return s.probeRepo.Create(ctx, probe)
 	}
-	return probe.ID, s.repo.UpdateByID(ctx, probe.ID, probe)
+	return probe.ID, s.probeRepo.UpdateByID(ctx, probe.ID, probe)
 }
 
 func (s *probeService) Collector(ctx context.Context, probe *entity.Probe) (*entity.Collector, error) {
-	if s.crepo == nil {
-		s.crepo = repository.NewCollectorRepository(entity.Collectors())
-	}
-	return s.crepo.GetByID(ctx, probe.CollectorID)
+	return s.collectorRepo.GetByID(ctx, probe.CollectorID)
 }
