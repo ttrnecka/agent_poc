@@ -7,11 +7,11 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/ttrnecka/agent_poc/webapi/db"
-	"github.com/ttrnecka/agent_poc/webapi/ws"
+	"github.com/ttrnecka/agent_poc/webapi/server/ws"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (h *Handler) ProbesApiHandler(c echo.Context) error {
+func (h *ApiHandler) ProbesApiHandler(c echo.Context) error {
 	probes, err := db.Probes().CRUD().All(c.Request().Context())
 	if err != nil {
 		return err
@@ -19,7 +19,7 @@ func (h *Handler) ProbesApiHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, probes)
 }
 
-func (h *Handler) ProbeCreateUpdateApiHandler(c echo.Context) error {
+func (h *ApiHandler) ProbeCreateUpdateApiHandler(c echo.Context) error {
 	var probe db.Probe
 	if err := json.NewDecoder(c.Request().Body).Decode(&probe); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -41,7 +41,7 @@ func (h *Handler) ProbeCreateUpdateApiHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, probeTmp)
 }
 
-func (h *Handler) ProbeDeleteApiHandler(c echo.Context) error {
+func (h *ApiHandler) ProbeDeleteApiHandler(c echo.Context) error {
 	probe_id := c.Param("id")
 	id, err := primitive.ObjectIDFromHex(probe_id)
 	if err != nil {
@@ -64,7 +64,7 @@ func (h *Handler) ProbeDeleteApiHandler(c echo.Context) error {
 	return c.NoContent(http.StatusOK)
 }
 
-func (h *Handler) refreshPolicies() {
+func (h *ApiHandler) refreshPolicies() {
 	probes, err := db.Probes().CRUD().All(context.Background())
 	if err != nil {
 		logger.Error().Err(err).Msg("Refreshing policies")

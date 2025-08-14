@@ -1,4 +1,4 @@
-package main
+package middleware
 
 import (
 	"net/http"
@@ -8,10 +8,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type echoMiddleware struct {
-}
-
-func (e echoMiddleware) sessionManager() echo.MiddlewareFunc {
+func SessionManager() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 
@@ -30,10 +27,9 @@ func (e echoMiddleware) sessionManager() echo.MiddlewareFunc {
 	}
 }
 
-func (e echoMiddleware) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		sess := Session(c)
-		logger.Info().Msg("AUTHENTICATING")
 		if sess.Values["user"] != nil {
 			return next(c)
 		}

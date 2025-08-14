@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (h *Handler) CollectorsApiHandler(c echo.Context) error {
+func (h *ApiHandler) CollectorsApiHandler(c echo.Context) error {
 
 	collectors, err := db.Collectors().Find(c.Request().Context(), bson.D{})
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 	"github.com/google/shlex"
 	"github.com/google/uuid"
 	"github.com/ttrnecka/agent_poc/common"
-	"github.com/ttrnecka/agent_poc/webapi/ws"
+	"github.com/ttrnecka/agent_poc/webapi/server/ws"
 )
 
 // functions handling run process

@@ -14,7 +14,7 @@ type Policy struct {
 	Versions []string `json:"versions"`
 }
 
-func (h *Handler) PoliciesApiHandler(c echo.Context) error {
+func (h *ApiHandler) PoliciesApiHandler(c echo.Context) error {
 	policies, err := db.Policies().Find(c.Request().Context(), bson.D{})
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func (h *Handler) PoliciesApiHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, policies)
 }
 
-func (h *Handler) PolicyApiHandler(c echo.Context) error {
+func (h *ApiHandler) PolicyApiHandler(c echo.Context) error {
 	file := fmt.Sprintf("policies/bin/%s_%s", c.Param("name"), c.Param("version"))
 	return c.File(file)
 }

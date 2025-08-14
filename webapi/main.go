@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/db"
+	"github.com/ttrnecka/agent_poc/webapi/server"
 
 	logging "github.com/ttrnecka/agent_poc/logger"
 )
@@ -13,7 +14,7 @@ import (
 var logger zerolog.Logger
 
 func init() {
-	logger = logging.SetupLogger("webapi")
+	logger = logging.SetupLogger("http")
 }
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	srv := &http.Server{
 		Addr: ":8888",
 		// Handler: Router(),
-		Handler: EchoRouter(),
+		Handler: server.Router(),
 	}
 
 	err = srv.ListenAndServe()

@@ -10,7 +10,7 @@ import (
 
 const baseDir = "/data/db"
 
-func (h *Handler) DataApiCollectorsHandler(c echo.Context) error {
+func (h *ApiHandler) DataApiCollectorsHandler(c echo.Context) error {
 	dirs, err := os.ReadDir(baseDir)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
@@ -25,7 +25,7 @@ func (h *Handler) DataApiCollectorsHandler(c echo.Context) error {
 }
 
 // /api/v1/data/collector/:collector
-func (h *Handler) DataApiCollectorHandler(c echo.Context) error {
+func (h *ApiHandler) DataApiCollectorHandler(c echo.Context) error {
 	collectorPath := filepath.Join(baseDir, c.Param("collector"))
 	dirs, err := os.ReadDir(collectorPath)
 	if err != nil {
@@ -40,7 +40,7 @@ func (h *Handler) DataApiCollectorHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{"devices": devices})
 }
 
-func (h *Handler) DataApiCollectorDeviceHandler(c echo.Context) error {
+func (h *ApiHandler) DataApiCollectorDeviceHandler(c echo.Context) error {
 	devicePath := filepath.Join(baseDir, c.Param("collector"), c.Param("device"))
 
 	entries, err := os.ReadDir(devicePath)
@@ -57,7 +57,7 @@ func (h *Handler) DataApiCollectorDeviceHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string][]string{"endpoints": endpoints})
 }
 
-func (h *Handler) DataApiCollectorDeviceEndpointHandler(c echo.Context) error {
+func (h *ApiHandler) DataApiCollectorDeviceEndpointHandler(c echo.Context) error {
 	filePath := filepath.Join(baseDir, c.Param("collector"), c.Param("device"), c.Param("endpoint"))
 
 	content, err := os.ReadFile(filePath)
