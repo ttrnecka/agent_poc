@@ -6,8 +6,8 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/ttrnecka/agent_poc/webapi/db"
-	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
 	"github.com/ttrnecka/agent_poc/webapi/server"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 
 	logging "github.com/ttrnecka/agent_poc/logger"
 )

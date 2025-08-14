@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/ttrnecka/agent_poc/webapi/db"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 )
 
 // functions handling refresh process
@@ -41,10 +41,10 @@ func refresh() error {
 		return err
 	}
 
-	getCollector := func(id string) *db.Collector {
-		var found *db.Collector
+	getCollector := func(id string) *dto.CollectorDTO {
+		var found *dto.CollectorDTO
 		for i := range collectors {
-			if collectors[i].ID.String() == id {
+			if collectors[i].ID == id {
 				found = &collectors[i]
 				return found
 			}

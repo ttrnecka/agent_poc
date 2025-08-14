@@ -38,10 +38,11 @@ type Probe struct {
 	Password string `bson:"password" json:"password"`
 }
 
-func (p *Probe) Collector() *Collector {
-	coll, _ := Collectors().GetByID(context.Background(), p.CollectorID)
-	return coll
-}
+// func (p *Probe) Collector() *db.Collector {
+// 	// coll, _ := Collectors().GetByID(context.Background(), p.CollectorID)
+// 	// return coll
+// 	return nil
+// }
 
 func (p *Probe) UpdateProbe(ctx context.Context) (primitive.ObjectID, error) {
 	crud := Probes().CRUD()

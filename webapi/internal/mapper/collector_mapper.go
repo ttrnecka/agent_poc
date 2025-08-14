@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
 	"github.com/ttrnecka/agent_poc/webapi/internal/entity"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 

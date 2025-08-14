@@ -6,10 +6,10 @@ import (
 
 	"github.com/labstack/echo/v4"
 	cdb "github.com/ttrnecka/agent_poc/common/db"
-	"github.com/ttrnecka/agent_poc/webapi/internal/dto"
 	"github.com/ttrnecka/agent_poc/webapi/internal/mapper"
 	"github.com/ttrnecka/agent_poc/webapi/internal/service"
 	"github.com/ttrnecka/agent_poc/webapi/server/middleware"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 	"golang.org/x/crypto/bcrypt"
 )
 

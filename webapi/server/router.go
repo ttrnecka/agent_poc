@@ -34,16 +34,18 @@ func Router() *echo.Echo {
 	ahandler := api.NewApiHandler()
 
 	collectorHandler := handler.NewCollectorHandler(service.NewCollectorService(repository.NewCollectorRepository(entity.Collectors())))
+	policyHandler := handler.NewPolicyHandler(service.NewPolicyService(repository.NewPolicyRepository(entity.Policies())))
+	probeHandler := handler.NewProbeHandler(service.NewProbeService(repository.NewProbeRepository(entity.Probes())))
 
 	api := e.Group("/api/v1", mid.AuthMiddleware)
 	api.GET("/collector", collectorHandler.Collectors)
-	api.GET("/policy", ahandler.PoliciesApiHandler)
-	api.GET("/probe", ahandler.ProbesApiHandler)
-	api.POST("/probe", ahandler.ProbeCreateUpdateApiHandler)
-	api.POST("/probe/:id", ahandler.ProbeCreateUpdateApiHandler)
-	api.DELETE("/probe/:id", ahandler.ProbeDeleteApiHandler)
+	api.GET("/policy", policyHandler.Policies)
+	api.GET("/probe", probeHandler.Probes)
+	api.POST("/probe", probeHandler.CreateUpdateProbe)
+	api.POST("/probe/:id", probeHandler.CreateUpdateProbe)
+	api.DELETE("/probe/:id", probeHandler.DeleteProbe)
 
-	api.GET("/policy/:name/:version", ahandler.PolicyApiHandler)
+	api.GET("/policy/:name/:version", policyHandler.PolicyFile)
 
 	api.GET("/data/collector", ahandler.DataApiCollectorsHandler)
 	api.GET("/data/collector/:collector", ahandler.DataApiCollectorHandler)

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ttrnecka/agent_poc/webapi/db"
+	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 )
 
 var httpClient *http.Client
@@ -111,7 +112,7 @@ func ApiGetProbes() ([]db.Probe, error) {
 	return probes, nil
 }
 
-func ApiGetCollectors() ([]db.Collector, error) {
+func ApiGetCollectors() ([]dto.CollectorDTO, error) {
 	requestURL := fmt.Sprintf("http://%s/api/v1/collector", *addr)
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -124,7 +125,7 @@ func ApiGetCollectors() ([]db.Collector, error) {
 	}
 	defer resp.Body.Close()
 
-	var collectors []db.Collector
+	var collectors []dto.CollectorDTO
 	err = json.NewDecoder(resp.Body).Decode(&collectors)
 	if err != nil {
 		return nil, err
