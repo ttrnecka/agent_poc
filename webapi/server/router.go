@@ -55,8 +55,15 @@ func Router() *echo.Echo {
 	e.GET("/ws", wsHandler.WS())
 
 	api := e.Group("/api/v1", mid.AuthMiddleware)
-	api.GET("/collector", collectorHandler.Collectors)
 	api.GET("/policy", policyHandler.Policies)
+
+	//collector
+	api.GET("/collector", collectorHandler.Collectors)
+	api.POST("/collector", collectorHandler.CreateUpdateCollector)
+	api.POST("/collector/:id", collectorHandler.CreateUpdateCollector)
+	api.DELETE("/collector/:id", collectorHandler.DeleteCollector)
+
+	//probe
 	api.GET("/probe", probeHandler.Probes)
 	api.POST("/probe", probeHandler.CreateUpdateProbe)
 	api.POST("/probe/:id", probeHandler.CreateUpdateProbe)
