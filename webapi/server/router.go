@@ -5,7 +5,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/ttrnecka/agent_poc/webapi/api"
 	"github.com/ttrnecka/agent_poc/webapi/internal/entity"
 	"github.com/ttrnecka/agent_poc/webapi/internal/handler"
 	"github.com/ttrnecka/agent_poc/webapi/internal/repository"
@@ -39,14 +38,15 @@ func Router() *echo.Echo {
 	collectorSvc := service.NewCollectorService(collectorRepo)
 	policySvc := service.NewPolicyService(policyRepo)
 	probeSvc := service.NewProbeService(probeRepo, collectorRepo)
+	dataSvc := service.NewDataService("/data/db")
 
 	//handlers
 	userHandler := handler.NewUserHandler(userSvc)
 	collectorHandler := handler.NewCollectorHandler(collectorSvc)
 	policyHandler := handler.NewPolicyHandler(policySvc)
 	probeHandler := handler.NewProbeHandler(probeSvc)
-	ahandler := api.NewApiHandler()
 	wsHandler := handler.NewWsHandler()
+	dataHandler := handler.NewDataHandler(dataSvc)
 
 	e.POST("/api/login", userHandler.LoginUser)
 	e.GET("/api/logout", userHandler.LogoutUser)
@@ -64,10 +64,10 @@ func Router() *echo.Echo {
 
 	api.GET("/policy/:name/:version", policyHandler.PolicyFile)
 
-	api.GET("/data/collector", ahandler.DataApiCollectorsHandler)
-	api.GET("/data/collector/:collector", ahandler.DataApiCollectorHandler)
-	api.GET("/data/collector/:collector/:device", ahandler.DataApiCollectorDeviceHandler)
-	api.GET("/data/collector/:collector/:device/:endpoint", ahandler.DataApiCollectorDeviceEndpointHandler)
+	api.GET("/data/collector", dataHandler.Collectors)
+	api.GET("/data/collector/:collector", dataHandler.CollectorDevices)
+	api.GET("/data/collector/:collector/:device", dataHandler.CollectorDeviceEndpoints)
+	api.GET("/data/collector/:collector/:device/:endpoint", dataHandler.CollectorDeviceEndpointData)
 
 	return e
 
