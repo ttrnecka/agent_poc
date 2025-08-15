@@ -25,12 +25,25 @@ type SetCreatedUpdateder interface {
 	SetCreatedUpdated()
 }
 
+type CRUDer[T any] interface {
+	GetByID(context.Context, primitive.ObjectID) (*T, error)
+	GetByField(context.Context, string, any) (*T, error)
+	All(context.Context) ([]T, error)
+	HardDeleteByID(context.Context, primitive.ObjectID) error
+	Create(context.Context, *T) (primitive.ObjectID, error)
+	UpdateByID(context.Context, primitive.ObjectID, *T) error
+}
+
 func (m *BaseModel) SetCreatedUpdated() {
 	now := time.Now()
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = now
 	}
 	m.UpdatedAt = now
+}
+
+func (m *BaseModel) GetID() primitive.ObjectID {
+	return m.ID
 }
 
 type CRUD[T any] struct {

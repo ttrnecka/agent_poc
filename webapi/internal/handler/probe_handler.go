@@ -65,12 +65,14 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 		})
 
 	}
+
 	probeTmp, err := h.service.GetProbe(c.Request().Context(), id.Hex())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
 		})
 	}
+
 	go h.refreshPolicies()
 	probeDTO = mapper.ToProbeDTO(*probeTmp)
 	return c.JSON(http.StatusOK, probeDTO)

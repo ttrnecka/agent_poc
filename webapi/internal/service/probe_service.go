@@ -14,7 +14,6 @@ type ProbeService interface {
 	DeleteProbe(context.Context, string) error
 	UpdateProbe(context.Context, *entity.Probe) (primitive.ObjectID, error)
 	Collector(context.Context, *entity.Probe) (*entity.Collector, error)
-	// GetByName(context.Context, string) (*entity.User, error)
 }
 
 type probeService struct {
