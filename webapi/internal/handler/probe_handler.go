@@ -35,13 +35,13 @@ func (h *ProbeHandler) Probes(c echo.Context) error {
 
 func (h *ProbeHandler) DeleteProbe(c echo.Context) error {
 	probe_id := c.Param("id")
-	_, err := h.service.GetProbe(c.Request().Context(), probe_id)
+	_, err := h.service.Get(c.Request().Context(), probe_id)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{
 			"error": err.Error(),
 		})
 	}
-	err = h.service.DeleteProbe(c.Request().Context(), probe_id)
+	err = h.service.Delete(c.Request().Context(), probe_id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
@@ -58,7 +58,7 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 
 	probe := mapper.ToProbeEntity(probeDTO)
 
-	id, err := h.service.UpdateProbe(c.Request().Context(), &probe)
+	id, err := h.service.Update(c.Request().Context(), probe.ID, &probe)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
@@ -66,7 +66,7 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 
 	}
 
-	probeTmp, err := h.service.GetProbe(c.Request().Context(), id.Hex())
+	probeTmp, err := h.service.Get(c.Request().Context(), id.Hex())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),

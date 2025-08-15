@@ -56,7 +56,7 @@ func (h *CollectorHandler) CreateUpdateCollector(c echo.Context) error {
 
 	coll := mapper.ToCollectorEntity(collDTO)
 
-	id, err := h.service.Update(c.Request().Context(), &coll)
+	id, err := h.service.Update(c.Request().Context(), coll.ID, &coll)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
