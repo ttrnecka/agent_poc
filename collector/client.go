@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ttrnecka/agent_poc/webapi/db"
 	"github.com/ttrnecka/agent_poc/webapi/shared/dto"
 )
 
@@ -91,7 +90,7 @@ func ApiLogout() error {
 	return nil
 }
 
-func ApiGetProbes() ([]db.Probe, error) {
+func ApiGetProbes() ([]dto.ProbeDTO, error) {
 	requestURL := fmt.Sprintf("http://%s/api/v1/probe", *addr)
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
@@ -104,7 +103,7 @@ func ApiGetProbes() ([]db.Probe, error) {
 	}
 	defer resp.Body.Close()
 
-	var probes []db.Probe
+	var probes []dto.ProbeDTO
 	err = json.NewDecoder(resp.Body).Decode(&probes)
 	if err != nil {
 		return nil, err
