@@ -33,6 +33,7 @@ type CRUDer[T any] interface {
 	HardDelete(context.Context, interface{}, ...*options.DeleteOptions) error
 	Create(context.Context, *T) (primitive.ObjectID, error)
 	UpdateByID(context.Context, primitive.ObjectID, *T) error
+	GetCollection() *mongo.Collection
 }
 
 func (m *BaseModel) SetCreatedUpdated() {
@@ -53,6 +54,10 @@ type CRUD[T any] struct {
 
 func NewCRUD[T any](db *mongo.Database, collectionName string) *CRUD[T] {
 	return &CRUD[T]{Collection: db.Collection(collectionName)}
+}
+
+func (c *CRUD[T]) GetCollection() *mongo.Collection {
+	return c.Collection
 }
 
 func (c *CRUD[T]) Create(ctx context.Context, doc *T) (primitive.ObjectID, error) {
