@@ -6,7 +6,7 @@ import (
 )
 
 type PolicyRepository interface {
-	cdb.CRUDer[entity.Policy]
+	GenericRepository[entity.Policy]
 }
 
 func NewPolicyRepository(db *cdb.CRUD[entity.Policy]) PolicyRepository {

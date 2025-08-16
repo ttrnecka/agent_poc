@@ -79,7 +79,8 @@ export const useApiStore = defineStore('api', () => {
   async function deleteCollector(collId) {
     try {
       await axios.delete(`${COLLECTORS_ENDPOINT}/${collId}`)
-      collectors.value = collectors.value.filter(obj => obj.id !== collId)
+      // collectors.value = collectors.value.filter(obj => obj.id !== collId)
+      reload()
     }
     catch (error) {
       console.error("Error:", error);
@@ -91,11 +92,12 @@ export const useApiStore = defineStore('api', () => {
     if (collector.id) {
       collector = await post(`${COLLECTORS_ENDPOINT}/${collector.id}`, collector)
       if (collector) {
-        for (let i in collectors.value) {
-          if (collectors.value[i].id == collector.id) {
-            collectors.value[i] = collector
-          }
-        }
+        // for (let i in collectors.value) {
+        //   if (collectors.value[i].id == collector.id) {
+        //     collectors.value[i] = collector
+        //   }
+        // }
+        reload()
         return true
       }
       return false
@@ -103,7 +105,8 @@ export const useApiStore = defineStore('api', () => {
     // new probe
     collector = await post(COLLECTORS_ENDPOINT, collector)
     if (collector) { 
-      collectors.value.push(collector)
+      // collectors.value.push(collector)
+      reload()
       return true
     }
     return false
@@ -113,11 +116,12 @@ export const useApiStore = defineStore('api', () => {
     if (probe.id) {
       probe = await post(`${PROBE_ENDPOINT}/${probe.id}`, probe)
       if (probe) {
-        for (let i in probes.value) {
-          if (probes.value[i].id == probe.id) {
-            probes.value[i] = probe
-          }
-        }
+        // for (let i in probes.value) {
+        //   if (probes.value[i].id == probe.id) {
+        //     probes.value[i] = probe
+        //   }
+        // }
+        reload()
         return true
       }
       return false
@@ -125,7 +129,8 @@ export const useApiStore = defineStore('api', () => {
     // new probe
     probe = await post(PROBE_ENDPOINT, probe)
     if (probe) { 
-      probes.value.push(probe)
+      // probes.value.push(probe)
+      reload()
       return true
     }
     return false

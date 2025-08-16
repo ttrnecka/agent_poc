@@ -24,7 +24,7 @@ func (h *CollectorHandler) Collectors(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var collectorsDTO []dto.CollectorDTO
+	collectorsDTO := []dto.CollectorDTO{}
 	for _, col := range collectors {
 		collectorsDTO = append(collectorsDTO, mapper.ToCollectorDTO(col))
 	}
@@ -51,6 +51,10 @@ func (h *CollectorHandler) DeleteCollector(c echo.Context) error {
 func (h *CollectorHandler) CreateUpdateCollector(c echo.Context) error {
 	var collDTO dto.CollectorDTO
 	if err := json.NewDecoder(c.Request().Body).Decode(&collDTO); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
+
+	if err := validate.Struct(collDTO); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 

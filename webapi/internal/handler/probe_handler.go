@@ -26,7 +26,7 @@ func (h *ProbeHandler) Probes(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var probesDTO []dto.ProbeDTO
+	probesDTO := []dto.ProbeDTO{}
 	for _, probe := range probes {
 		probesDTO = append(probesDTO, mapper.ToProbeDTO(probe))
 	}
@@ -56,6 +56,9 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	if err := validate.Struct(probeDTO); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 	probe := mapper.ToProbeEntity(probeDTO)
 
 	id, err := h.service.Update(c.Request().Context(), probe.ID, &probe)
@@ -91,6 +94,7 @@ func (h *ProbeHandler) refreshPolicies() {
 		c, err := h.service.Collector(context.Background(), &p)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Cannot find collector: %s", p.CollectorID)
+			continue
 		}
 		collectors[c.Name] = true
 	}

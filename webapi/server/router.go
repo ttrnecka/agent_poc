@@ -35,7 +35,7 @@ func Router() *echo.Echo {
 
 	// services
 	userSvc := service.NewUserService(usersRepo)
-	collectorSvc := service.NewCollectorService(collectorRepo)
+	collectorSvc := service.NewCollectorService(collectorRepo, probeRepo)
 	policySvc := service.NewPolicyService(policyRepo)
 	probeSvc := service.NewProbeService(probeRepo, collectorRepo)
 	dataSvc := service.NewDataService("/data/db")

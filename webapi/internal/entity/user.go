@@ -9,7 +9,7 @@ type User struct {
 	cdb.BaseModel `bson:",inline"`
 	Username      string `bson:"username"`
 	Email         string `bson:"email"`
-	Password      string `bson:"password"`
+	Password      string `bson:"password,omitempty"`
 }
 
 func Users() *cdb.CRUD[User] {

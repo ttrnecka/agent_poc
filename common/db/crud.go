@@ -30,6 +30,7 @@ type CRUDer[T any] interface {
 	GetByField(context.Context, string, any) (*T, error)
 	All(context.Context) ([]T, error)
 	HardDeleteByID(context.Context, primitive.ObjectID) error
+	HardDelete(context.Context, interface{}, ...*options.DeleteOptions) error
 	Create(context.Context, *T) (primitive.ObjectID, error)
 	UpdateByID(context.Context, primitive.ObjectID, *T) error
 }
@@ -168,6 +169,11 @@ func (c *CRUD[T]) SoftDeleteByID(ctx context.Context, id primitive.ObjectID) err
 
 func (c *CRUD[T]) HardDeleteByID(ctx context.Context, id primitive.ObjectID) error {
 	_, err := c.Collection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
+}
+
+func (c *CRUD[T]) HardDelete(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) error {
+	_, err := c.Collection.DeleteMany(ctx, filter, opts...)
 	return err
 }
 

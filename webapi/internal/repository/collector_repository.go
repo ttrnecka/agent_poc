@@ -6,7 +6,8 @@ import (
 )
 
 type CollectorRepository interface {
-	cdb.CRUDer[entity.Collector]
+	// cdb.CRUDer[entity.Collector]
+	GenericRepository[entity.Collector]
 }
 
 func NewCollectorRepository(db *cdb.CRUD[entity.Collector]) CollectorRepository {

@@ -15,13 +15,18 @@ const newProbe = {
     user: null,
     password: null
 }
+const newProbeState = {
+  errors: {},
+  touched: {}
+}
 const apiStore = useApiStore()
 const sessionStore = useSessionStore()
 
 const state = ref({
   probeModal: null,
   taskModal: null,
-  newProbe: newProbe,
+  newProbe: structuredClone(newProbe),
+  newProbeState: structuredClone(newProbeState),
   task: {
     title: null,
     message: null,
@@ -37,16 +42,20 @@ onMounted(() => {
 })
 
 function showProbeModal() {
-  state.value.newProbe = { ...newProbe }
+  state.value.newProbe = structuredClone(newProbe)
+  state.value.newProbeState = structuredClone(newProbeState)
   state.value.probeModal.show()
 }
 
 function editProbe(probe) {
   state.value.newProbe = { ...probe }
+  state.value.newProbeState = structuredClone(newProbeState)
   state.value.probeModal.show()
 }
 
 async function saveProbe() {
+  if (!validateProbeForm()) return
+
   if (await apiStore.saveProbe(state.value.newProbe)) {
     state.value.newProbe = newProbe
     state.value.probeModal.hide();
@@ -105,6 +114,49 @@ const stateClass = computed(() => {
       return "";
   }
 });
+
+function validateProbeForm() {
+  validateProbeField("collector_id")
+  validateProbeField("policy")
+  validateProbeField("version")
+  validateProbeField("address")
+  validateProbeField("port")
+  validateProbeField("user")
+  return  !isValid('collector_id') && 
+          !isValid('policy') && 
+          !isValid('version') && 
+          !isValid('address') && 
+          !isValid('port') && 
+          !isValid('user')
+}
+
+function required(field,name="Field") {
+  const errors = state.value.newProbeState.errors
+  const form = state.value.newProbe
+  if (!form[field]) {
+    errors[field] = `${name} is required`
+  } else {
+    errors[field] = ""
+  }
+}
+function validateProbeField(field) {
+  state.value.newProbeState.touched[field] = true
+  const errors = state.value.newProbeState.errors
+  const form = state.value.newProbe
+  required(field)
+}
+
+function isValid(field) {
+  return state.value.newProbeState.errors[field] ? true : false
+}
+
+function isInvalid(field) {
+  return state.value.newProbeState.touched[field] && !state.value.newProbeState.errors[field]
+}
+
+function invalidError(field) {
+  return state.value.newProbeState.errors[field]
+}
 
 </script>
 <template>
@@ -177,23 +229,38 @@ const stateClass = computed(() => {
           <div class="modal-body">
             <form @submit.prevent="saveProbe()">
               <div class="mb-3">
-                <select id="collectorInput" class="form-select form-select-sm" aria-label="Select collector" v-model="state.newProbe.collector_id">
+                <select   id="collectorInput" 
+                          class="form-select form-select-sm" 
+                          aria-label="Select collector" 
+                          v-model="state.newProbe.collector_id"
+                          :class="{'is-invalid': isValid('collector_id'), 'is-valid': isInvalid('collector_id')}"
+                          @blur="validateProbeField('collector_id')"
+                          >
                   <option selected disabled value="">-- Collector --</option>
-                  <option v-for="coll,index in apiStore.collectors" :value="coll.id" :key="index">{{coll.name}}</option>
+                  <option v-for="coll,index in apiStore.sortedCollectors" :value="coll.id" :key="index">{{coll.name}}</option>
                 </select>
+                <div v-if="isValid('collector_id')" class="invalid-feedback">{{ invalidError('collector_id') }}</div>
               </div>
               <div class="mb-3">
-                <select id="policyInput" class="form-select form-select-sm" aria-label="Select policy type" v-model="state.newProbe.policy">
+                <select id="policyInput" 
+                        class="form-select form-select-sm" 
+                        aria-label="Select policy type" 
+                        v-model="state.newProbe.policy"
+                        :class="{'is-invalid': isValid('policy'), 'is-valid': isInvalid('policy')}"
+                        @blur="validateProbeField('policy')">
                   <option selected disabled value="">-- Policy --</option>
                   <option v-for="(pol,key) in apiStore.policies" :value="pol.name" :key="key">{{pol.description}}</option>
                 </select>
+                <div v-if="isValid('policy')" class="invalid-feedback">{{ invalidError('policy') }}</div>
               </div>
-                <div class="mb-3">
+              <div class="mb-3">
                 <select
                   id="versionInput"
                   class="form-select form-select-sm"
                   aria-label="Select policy version"
                   v-model="state.newProbe.version"
+                  :class="{'is-invalid': isValid('version'), 'is-valid': isInvalid('version')}"
+                  @blur="validateProbeField('version')"
                 >
                   <option v-if="!state.newProbe.policy" disabled value="">-- Select policy first --</option>
                   <option v-else disabled value="">-- Version --</option>
@@ -205,18 +272,43 @@ const stateClass = computed(() => {
                   {{ version }}
                   </option>
                 </select>
-                </div>
-              <div class="mb-3">
-                <input type="text" class="form-control form-control-sm" id="ipInput" aria-describedby="ipHelp" v-model="state.newProbe.address"
-                placeholder="IP or FQDN of the device" title="IP or FQDN of the device">
+                <div v-if="isValid('version')" class="invalid-feedback">{{ invalidError('version') }}</div>
               </div>
               <div class="mb-3">
-                <input type="number" class="form-control form-control-sm" id="portInput" aria-describedby="portHelp" v-model="state.newProbe.port"
-                placeholder="Port" title="Port">
+                <input  type="text" 
+                        class="form-control form-control-sm" 
+                        id="ipInput" 
+                        aria-describedby="ipHelp" 
+                        v-model="state.newProbe.address"
+                        placeholder="IP or FQDN of the device"
+                        :class="{'is-invalid': isValid('address'), 'is-valid': isInvalid('address')}"
+                        @blur="validateProbeField('address')"
+                        title="IP or FQDN of the device">
+                <div v-if="isValid('address')" class="invalid-feedback">{{ invalidError('address') }}</div>
               </div>
               <div class="mb-3">
-                <input type="text" class="form-control form-control-sm" id="userInput" aria-describedby="userHelp" v-model="state.newProbe.user"
-                placeholder="User with discover capabilities" title="User with discover capabilities" >
+                <input  type="number" 
+                        class="form-control form-control-sm" 
+                        id="portInput" 
+                        aria-describedby="portHelp" 
+                        v-model="state.newProbe.port"
+                        placeholder="Port" 
+                        :class="{'is-invalid': isValid('port'), 'is-valid': isInvalid('port')}"
+                        @blur="validateProbeField('port')"
+                        title="Port">
+                <div v-if="isValid('port')" class="invalid-feedback">{{ invalidError('port') }}</div>
+              </div>
+              <div class="mb-3">
+                <input  type="text"  
+                        class="form-control form-control-sm" 
+                        id="userInput" 
+                        aria-describedby="userHelp" 
+                        v-model="state.newProbe.user"
+                        placeholder="User with discover capabilities" 
+                        :class="{'is-invalid': isValid('user'), 'is-valid': isInvalid('user')}"
+                        @blur="validateProbeField('user')"
+                        title="User with discover capabilities" >
+                <div v-if="isValid('user')" class="invalid-feedback">{{ invalidError('user') }}</div>
               </div>
               <div class="mb-3">
                 <input type="password" class="form-control form-control-sm" id="passwordInput" v-model="state.newProbe.password" placeholder="Password"

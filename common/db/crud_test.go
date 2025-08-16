@@ -84,7 +84,7 @@ func TestCRUDOperations(t *testing.T) {
 	assert.Equal(t, "john@example.com", found.Email)
 
 	// --- UpdateByID ---
-	u1 := &TestUser{Name: "John", Email: "john@example.com"}
+	u1 := &TestUser{Name: "John", Email: "john.doe@example.com"}
 	err = userCRUD.UpdateByID(ctx, id, u1)
 	require.NoError(t, err)
 
@@ -111,9 +111,24 @@ func TestCRUDOperations(t *testing.T) {
 	_, err = userCRUD.GetByID(ctx, id)
 	assert.ErrorIs(t, err, ErrNotFound)
 
-	// --- Hard Delete ---
+	// --- Hard Delete by id---
 	err = userCRUD.HardDeleteByID(ctx, id)
 	require.NoError(t, err)
+
+	// --- Hard Delete all ---
+	// --- Create ---
+	_, _ = userCRUD.Create(ctx, u)
+	results, err = userCRUD.Find(ctx, bson.M{"name": "John"})
+	require.NoError(t, err)
+	assert.Len(t, results, 1)
+
+	err = userCRUD.HardDelete(ctx, bson.M{"name": "John"})
+	require.NoError(t, err)
+
+	results, err = userCRUD.Find(ctx, bson.M{"name": "John"})
+	require.NoError(t, err)
+	assert.Len(t, results, 0)
+
 }
 
 func TestTimestamps(t *testing.T) {

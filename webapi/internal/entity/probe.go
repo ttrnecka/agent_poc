@@ -14,7 +14,7 @@ type Probe struct {
 	Address       string             `bson:"address"`
 	Port          int                `bson:"port"`
 	User          string             `bson:"user"`
-	Password      string             `bson:"password"`
+	Password      string             `bson:"password,omitempty"`
 }
 
 func Probes() *cdb.CRUD[Probe] {

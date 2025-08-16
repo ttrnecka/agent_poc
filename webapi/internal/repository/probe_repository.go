@@ -6,7 +6,7 @@ import (
 )
 
 type ProbeRepository interface {
-	cdb.CRUDer[entity.Probe]
+	GenericRepository[entity.Probe]
 }
 
 func NewProbeRepository(db *cdb.CRUD[entity.Probe]) ProbeRepository {
