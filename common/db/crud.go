@@ -34,6 +34,7 @@ type CRUDer[T any] interface {
 	Create(context.Context, *T) (primitive.ObjectID, error)
 	UpdateByID(context.Context, primitive.ObjectID, *T) error
 	GetCollection() *mongo.Collection
+	Find(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
 }
 
 func (m *BaseModel) SetCreatedUpdated() {
