@@ -24,89 +24,74 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <header>
-      <img alt="Vue logo" class="logo" src="@/assets/xa.png" width="200" height="125" />
-
-      <div class="wrapper">
-        <Header msg="Welcome to xAnalytics" />
-        <nav>
-          <RouterLink to="/">Configuration</RouterLink>
-          <RouterLink to="/collectors">Collector</RouterLink>
-          <RouterLink to="/inventory">Inventory</RouterLink>
-          <button
-              v-if="dataStore.isLoggedIn"
-              @click="dataStore.logoutUser"
-              class="btn btn-outline-primary btn-sm ms-2"
-            >
-              Logout
-            </button>
-          </nav>
+ <div class="d-flex vh-100">
+    <!-- Sidebar: logo + navigation only -->
+    <aside class="bg-light border-end d-flex flex-column" style="width: 150px;">
+      <div class="text-center">
+        <img src="@/assets/xa.png" class="flogo logo" />
       </div>
-    </header>
 
-    <RouterView />
+      <nav class="flex-grow-1">
+        <ul class="nav flex-column">
+          <li class="nav-item ">
+            <RouterLink class="nav-link" to="/">Probes</RouterLink>
+          </li>
+          <li class="nav-item">
+            <RouterLink class="nav-link" to="/collectors">Collectors</RouterLink>
+          </li>
+          <li class="nav-item">
+            <RouterLink class="nav-link" to="/inventory">Inventory</RouterLink>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="mt-auto mx-2 mb-2">
+        <button
+          v-if="dataStore.isLoggedIn"
+          @click="dataStore.logoutUser"
+          class="btn btn-outline-primary btn-sm w-100"
+        >
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main content: header + router view -->
+    <main class="flex-grow-1 d-flex flex-column p-3 overflow-auto">
+      <!-- Header -->
+      <header class="d-flex justify-content-between align-items-center mb-3">
+        <Header msg="xAnalytics Agent PoC" />
+      </header>
+
+      <!-- Main content -->
+      <div class="flex-grow-1">
+        <RouterView />
+      </div>
+    </main>
   </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-nav {
+.flogo {
   width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 0rem;
+  height: auto;
+}
+aside .nav-link {
+  font-size: 1rem;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+a,
+.blue {
+  text-decoration: none;
+  color: hsla(213, 40%, 58%, 1);
+  transition: 0.4s;
+  font-weight: 500;
+  font-variant: all-small-caps;
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1.1rem 0;
-    margin-top: 0rem;
+@media (hover: hover) {
+  a:hover {
+    background-color: rgba(105, 144, 191, 0.322);
   }
 }
 </style>

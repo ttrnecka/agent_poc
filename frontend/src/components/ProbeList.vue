@@ -161,12 +161,14 @@ function invalidError(field) {
 </script>
 <template>
 <div class="container-fluid">
-  <p v-if="!apiStore.policies">{{ loadedMessage }}</p>
-  <div v-else class="row">
+  <div class="row mb-3">
     <div class="col-auto" style="flex: 0 0 200px;">
       <button @click="showProbeModal()" class="btn btn-primary btn-sm w-100">Add Probe</button>
     </div>
-    <div class="col">
+  </div>
+  <div class="row">
+    <p v-if="!apiStore.policies">{{ loadedMessage }}</p>
+    <div v-else class="col">
       <table class="table table-striped table-hover table-sm">
         <thead class="">
           <tr>

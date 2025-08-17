@@ -90,12 +90,14 @@ function invalidError(field) {
 </script>
 <template>
 <div class="container-fluid">
-  <p v-if="!apiStore.sortedCollectors">{{ loadedMessage }}</p>
-  <div v-else class="row">
+  <div class="row mb-3">
     <div class="col-auto" style="flex: 0 0 200px;">
       <button @click="showCollectorModal()" class="btn btn-primary btn-sm w-100">Add Collector</button>
     </div>
-    <div class="col">
+  </div>
+  <div class="row">
+    <p v-if="!apiStore.sortedCollectors">{{ loadedMessage }}</p>
+    <div v-else class="col">
       <table class="table">
         <thead class="thead-dark">
           <tr>
