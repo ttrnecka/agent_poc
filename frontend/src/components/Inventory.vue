@@ -2,8 +2,6 @@
   <div class="container-fluid">
     <p v-if="!apiStore.sortedCollectors">{{ loadedMessage }}</p>
     <div v-else class="row">
-      <div class="col-auto" style="flex: 0 0 200px;">
-      </div>
       <div class="col">
         <div class="accordion" id="collectorsAccordion">
           <div

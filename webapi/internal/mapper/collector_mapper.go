@@ -18,9 +18,8 @@ func ToCollectorEntity(c dto.CollectorDTO) entity.Collector {
 
 func ToCollectorDTO(c entity.Collector) dto.CollectorDTO {
 	return dto.CollectorDTO{
-		ID:       c.ID.Hex(),
-		Name:     c.Name,
-		Status:   c.Status,
-		Password: c.Password,
+		ID:     c.ID.Hex(),
+		Name:   c.Name,
+		Status: c.Status,
 	}
 }

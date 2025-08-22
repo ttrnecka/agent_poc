@@ -25,6 +25,18 @@ type SetCreatedUpdateder interface {
 	SetCreatedUpdated()
 }
 
+type CRUDer[T any] interface {
+	GetByID(context.Context, primitive.ObjectID) (*T, error)
+	GetByField(context.Context, string, any) (*T, error)
+	All(context.Context) ([]T, error)
+	HardDeleteByID(context.Context, primitive.ObjectID) error
+	HardDelete(context.Context, interface{}, ...*options.DeleteOptions) error
+	Create(context.Context, *T) (primitive.ObjectID, error)
+	UpdateByID(context.Context, primitive.ObjectID, *T) error
+	GetCollection() *mongo.Collection
+	Find(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
+}
+
 func (m *BaseModel) SetCreatedUpdated() {
 	now := time.Now()
 	if m.CreatedAt.IsZero() {
@@ -33,12 +45,20 @@ func (m *BaseModel) SetCreatedUpdated() {
 	m.UpdatedAt = now
 }
 
+func (m *BaseModel) GetID() primitive.ObjectID {
+	return m.ID
+}
+
 type CRUD[T any] struct {
 	Collection *mongo.Collection
 }
 
 func NewCRUD[T any](db *mongo.Database, collectionName string) *CRUD[T] {
 	return &CRUD[T]{Collection: db.Collection(collectionName)}
+}
+
+func (c *CRUD[T]) GetCollection() *mongo.Collection {
+	return c.Collection
 }
 
 func (c *CRUD[T]) Create(ctx context.Context, doc *T) (primitive.ObjectID, error) {
@@ -167,6 +187,11 @@ func (c *CRUD[T]) SoftDeleteByID(ctx context.Context, id primitive.ObjectID) err
 
 func (c *CRUD[T]) HardDeleteByID(ctx context.Context, id primitive.ObjectID) error {
 	_, err := c.Collection.DeleteOne(ctx, bson.M{"_id": id})
+	return err
+}
+
+func (c *CRUD[T]) HardDelete(ctx context.Context, filter interface{}, opts ...*options.DeleteOptions) error {
+	_, err := c.Collection.DeleteMany(ctx, filter, opts...)
 	return err
 }
 

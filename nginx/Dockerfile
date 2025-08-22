@@ -21,4 +21,4 @@ RUN npm run build
 
 FROM nginx:alpine
 
-COPY --from=npm /app/dist /usr/share/nginx/html/
+COPY --from=npm /app/dist /usr/share/nginx/html/xapoc

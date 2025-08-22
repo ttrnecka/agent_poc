@@ -43,3 +43,6 @@ docker compose build --no-cache collector1
 docker image prune -f
 
 docker compose up -d collector1 collector2
+
+# SSL 
+https://mindsers.blog/en/post/https-using-nginx-certbot-docker/

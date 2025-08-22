@@ -5,7 +5,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/ttrnecka/agent_poc/webapi/api"
 	"github.com/ttrnecka/agent_poc/webapi/internal/entity"
 	"github.com/ttrnecka/agent_poc/webapi/internal/handler"
 	"github.com/ttrnecka/agent_poc/webapi/internal/repository"
@@ -22,24 +21,49 @@ func Router() *echo.Echo {
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 	e.Use(mid.SessionManager())
 
-	userHandler := handler.NewUserHandler(service.NewUserService(repository.NewUserRepository(entity.Users())))
+	// db layer
+	users := entity.Users()
+	collectors := entity.Collectors()
+	policies := entity.Policies()
+	probes := entity.Probes()
+
+	// repositories
+	usersRepo := repository.NewUserRepository(users)
+	collectorRepo := repository.NewCollectorRepository(collectors)
+	policyRepo := repository.NewPolicyRepository(policies)
+	probeRepo := repository.NewProbeRepository(probes)
+
+	// services
+	userSvc := service.NewUserService(usersRepo)
+	collectorSvc := service.NewCollectorService(collectorRepo, probeRepo)
+	policySvc := service.NewPolicyService(policyRepo)
+	probeSvc := service.NewProbeService(probeRepo, collectorRepo)
+	dataSvc := service.NewDataService("/data/db")
+
+	//handlers
+	userHandler := handler.NewUserHandler(userSvc)
+	collectorHandler := handler.NewCollectorHandler(collectorSvc)
+	policyHandler := handler.NewPolicyHandler(policySvc)
+	probeHandler := handler.NewProbeHandler(probeSvc)
+	wsHandler := handler.NewWsHandler()
+	dataHandler := handler.NewDataHandler(dataSvc)
 
 	e.POST("/api/login", userHandler.LoginUser)
 	e.GET("/api/logout", userHandler.LogoutUser)
 	e.GET("/api/user", userHandler.User, mid.AuthMiddleware)
 
-	wsHandler := handler.NewWsHandler()
 	e.GET("/ws", wsHandler.WS())
 
-	ahandler := api.NewApiHandler()
-
-	collectorHandler := handler.NewCollectorHandler(service.NewCollectorService(repository.NewCollectorRepository(entity.Collectors())))
-	policyHandler := handler.NewPolicyHandler(service.NewPolicyService(repository.NewPolicyRepository(entity.Policies())))
-	probeHandler := handler.NewProbeHandler(service.NewProbeService(repository.NewProbeRepository(entity.Probes())))
-
 	api := e.Group("/api/v1", mid.AuthMiddleware)
-	api.GET("/collector", collectorHandler.Collectors)
 	api.GET("/policy", policyHandler.Policies)
+
+	//collector
+	api.GET("/collector", collectorHandler.Collectors)
+	api.POST("/collector", collectorHandler.CreateUpdateCollector)
+	api.POST("/collector/:id", collectorHandler.CreateUpdateCollector)
+	api.DELETE("/collector/:id", collectorHandler.DeleteCollector)
+
+	//probe
 	api.GET("/probe", probeHandler.Probes)
 	api.POST("/probe", probeHandler.CreateUpdateProbe)
 	api.POST("/probe/:id", probeHandler.CreateUpdateProbe)
@@ -47,10 +71,10 @@ func Router() *echo.Echo {
 
 	api.GET("/policy/:name/:version", policyHandler.PolicyFile)
 
-	api.GET("/data/collector", ahandler.DataApiCollectorsHandler)
-	api.GET("/data/collector/:collector", ahandler.DataApiCollectorHandler)
-	api.GET("/data/collector/:collector/:device", ahandler.DataApiCollectorDeviceHandler)
-	api.GET("/data/collector/:collector/:device/:endpoint", ahandler.DataApiCollectorDeviceEndpointHandler)
+	api.GET("/data/collector", dataHandler.Collectors)
+	api.GET("/data/collector/:collector", dataHandler.CollectorDevices)
+	api.GET("/data/collector/:collector/:device", dataHandler.CollectorDeviceEndpoints)
+	api.GET("/data/collector/:collector/:device/:endpoint", dataHandler.CollectorDeviceEndpointData)
 
 	return e
 

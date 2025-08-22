@@ -10,9 +10,9 @@ defineProps({
 <template>
   <div class="greetings">
     <h1 class="blue">{{ msg }}</h1>
-    <h3 class="blue">
+    <!-- <h3 class="blue">
       Agent Proof Of Concept
-    </h3>
+    </h3> -->
   </div>
 </template>
 

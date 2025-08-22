@@ -23,7 +23,7 @@ func (h *PolicyHandler) Policies(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var policiesDTO []dto.PolicyDTO
+	policiesDTO := []dto.PolicyDTO{}
 	for _, pol := range policies {
 		policiesDTO = append(policiesDTO, mapper.ToPolicyDTO(pol))
 	}

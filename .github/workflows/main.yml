@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             set -euo pipefail
-            cd /xapoc
+            cd /web/xapoc
             git pull
             sudo docker compose build
             echo "Build done"

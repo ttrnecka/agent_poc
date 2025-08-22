@@ -1,39 +1,5 @@
 @import './base.css';
 
-#app {
-  /* max-width: 1280px; */
-  margin: 0 0;
-  padding: 2rem;
-  /* font-weight: normal; */
-}
-
-a,
-.blue {
-  text-decoration: none;
-  color: hsla(217, 90%, 61%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(231, 100%, 37%, 0.2);
-  }
-}
-/* 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
-} */
-
 .accordion-button {
   padding: 0.25rem 0.75rem;
   font-size: 0.9rem;
@@ -57,4 +23,29 @@ a,
 .btn {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+.btn-primary {
+  color: #fff;           
+  background-color: hsla(213, 40%, 58%, 1);
+  border-color: hsla(213, 40%, 58%, 1);
+}
+
+.btn-primary:hover {
+  color: #fff;      
+}
+
+a,
+.blue {
+  text-decoration: none;
+  color: hsla(213, 40%, 58%, 1);
+  transition: 0.4s;
+  font-weight: 500;
+  font-variant: all-small-caps;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: rgba(105, 144, 191, 0.322);
+  }
 }

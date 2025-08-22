@@ -26,7 +26,7 @@ func (h *ProbeHandler) Probes(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	var probesDTO []dto.ProbeDTO
+	probesDTO := []dto.ProbeDTO{}
 	for _, probe := range probes {
 		probesDTO = append(probesDTO, mapper.ToProbeDTO(probe))
 	}
@@ -35,13 +35,13 @@ func (h *ProbeHandler) Probes(c echo.Context) error {
 
 func (h *ProbeHandler) DeleteProbe(c echo.Context) error {
 	probe_id := c.Param("id")
-	_, err := h.service.GetProbe(c.Request().Context(), probe_id)
+	_, err := h.service.Get(c.Request().Context(), probe_id)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{
 			"error": err.Error(),
 		})
 	}
-	err = h.service.DeleteProbe(c.Request().Context(), probe_id)
+	err = h.service.Delete(c.Request().Context(), probe_id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
@@ -56,21 +56,26 @@ func (h *ProbeHandler) CreateUpdateProbe(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	if err := validate.Struct(probeDTO); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
+	}
 	probe := mapper.ToProbeEntity(probeDTO)
 
-	id, err := h.service.UpdateProbe(c.Request().Context(), &probe)
+	id, err := h.service.Update(c.Request().Context(), probe.ID, &probe)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
 		})
 
 	}
-	probeTmp, err := h.service.GetProbe(c.Request().Context(), id.Hex())
+
+	probeTmp, err := h.service.Get(c.Request().Context(), id.Hex())
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": err.Error(),
 		})
 	}
+
 	go h.refreshPolicies()
 	probeDTO = mapper.ToProbeDTO(*probeTmp)
 	return c.JSON(http.StatusOK, probeDTO)
@@ -89,6 +94,7 @@ func (h *ProbeHandler) refreshPolicies() {
 		c, err := h.service.Collector(context.Background(), &p)
 		if err != nil {
 			logger.Error().Err(err).Msgf("Cannot find collector: %s", p.CollectorID)
+			continue
 		}
 		collectors[c.Name] = true
 	}
