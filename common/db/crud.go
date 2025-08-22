@@ -145,6 +145,18 @@ func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T)
 	return err
 }
 
+func (c *CRUD[T]) InsertAll(ctx context.Context, docs []T) error {
+	inserts := make([]any, 0)
+	for _, d := range docs {
+		if bm, ok := any(d).(interface{ SetCreatedUpdated() }); ok {
+			bm.SetCreatedUpdated()
+		}
+		inserts = append(inserts, d)
+	}
+	_, err := c.Collection.InsertMany(ctx, inserts)
+	return err
+}
+
 func (c *CRUD[T]) SoftDeleteByID(ctx context.Context, id primitive.ObjectID) error {
 	now := time.Now()
 	_, err := c.Collection.UpdateOne(ctx,
