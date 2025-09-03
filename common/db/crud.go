@@ -18,7 +18,7 @@ type BaseModel struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
 	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
-	DeletedAt time.Time          `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
+	DeletedAt *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
 }
 
 type SetCreatedUpdateder interface {
