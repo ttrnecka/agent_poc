@@ -35,6 +35,10 @@ type CRUDer[T any] interface {
 	UpdateByID(context.Context, primitive.ObjectID, *T) error
 	GetCollection() *mongo.Collection
 	Find(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
+	FindWithSoftDeleted(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
+	InsertAll(context.Context, []T) error
+	SoftDeleteByID(context.Context, primitive.ObjectID) error
+	RestoreByID(context.Context, primitive.ObjectID) error
 }
 
 func (m *BaseModel) SetCreatedUpdated() {
@@ -104,6 +108,24 @@ func (c *CRUD[T]) All(ctx context.Context) ([]T, error) {
 	return c.Find(ctx, bson.D{})
 }
 
+func (c *CRUD[T]) FindWithSoftDeleted(ctx context.Context, filter interface{}, opts ...*options.FindOptions) ([]T, error) {
+	cursor, err := c.Collection.Find(ctx, filter, opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []T
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+	// return empty array if nothing is found
+	if results == nil {
+		return []T{}, nil
+	}
+	return results, nil
+}
+
 func (c *CRUD[T]) GetByField(ctx context.Context, field string, value interface{}) (*T, error) {
 	var result T
 	err := c.Collection.FindOne(ctx, bson.M{
@@ -165,11 +187,30 @@ func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T)
 	return err
 }
 
+func (c *CRUD[T]) InsertAll(ctx context.Context, docs []T) error {
+	inserts := make([]any, 0)
+	for _, d := range docs {
+		if bm, ok := any(d).(interface{ SetCreatedUpdated() }); ok {
+			bm.SetCreatedUpdated()
+		}
+		inserts = append(inserts, d)
+	}
+	_, err := c.Collection.InsertMany(ctx, inserts)
+	return err
+}
+
 func (c *CRUD[T]) SoftDeleteByID(ctx context.Context, id primitive.ObjectID) error {
 	now := time.Now()
 	_, err := c.Collection.UpdateOne(ctx,
 		bson.M{"_id": id, "deletedAt": bson.M{"$exists": false}},
 		bson.M{"$set": bson.M{"deletedAt": now}})
+	return err
+}
+
+func (c *CRUD[T]) RestoreByID(ctx context.Context, id primitive.ObjectID) error {
+	_, err := c.Collection.UpdateOne(ctx,
+		bson.M{"_id": id, "deletedAt": bson.M{"$exists": true}},
+		bson.M{"$unset": bson.M{"deletedAt": ""}})
 	return err
 }
 
