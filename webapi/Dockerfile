@@ -1,4 +1,4 @@
-FROM golang:1.23-alpine AS build
+FROM golang:1.24-alpine AS build
 ARG IMPORT_ZSCALER_CERT=false
 
 COPY zscaler/zscaler-root-ca.crt /tmp/zscaler-root-ca.crt
