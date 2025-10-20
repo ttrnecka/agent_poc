@@ -3,6 +3,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -23,6 +24,12 @@ type Config struct {
 	MaxBackups int           `yaml:"max_backups"`
 	MaxAge     int           `yaml:"max_age"`
 	Compress   bool          `yaml:"compress"`
+}
+
+func GetLogLocation() string {
+	exePath, _ := os.Executable()
+	exeDir := filepath.Dir(exePath)
+	return filepath.Join(exeDir, defaultLogLocation)
 }
 
 func LogLocation(name string) {
@@ -55,7 +62,7 @@ func SetupLogger(name string) zerolog.Logger {
 	var config Config
 
 	configName := fmt.Sprintf("%s%s.yaml", defaultConfigLocation, name)
-	logName := fmt.Sprintf("%s%s.log", defaultLogLocation, name)
+	logName := filepath.Join(GetLogLocation(), fmt.Sprintf("%s.log", name))
 	if _, err := os.Stat(configName); err != nil {
 		config = DefaultConfig()
 		log.Info().Str("config", fmt.Sprintf("%+v", config)).Msg("Using default logging config")
