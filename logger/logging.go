@@ -27,9 +27,7 @@ type Config struct {
 }
 
 func GetLogLocation() string {
-	exePath, _ := os.Executable()
-	exeDir := filepath.Dir(exePath)
-	return filepath.Join(exeDir, defaultLogLocation)
+	return defaultLogLocation
 }
 
 func LogLocation(name string) {
