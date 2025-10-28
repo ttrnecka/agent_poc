@@ -47,8 +47,10 @@ func (m *BaseModel) SetUpdated() {
 }
 
 func (m *BaseModel) SetCreated() {
-	now := time.Now()
-	m.CreatedAt = &now
+	if m.CreatedAt == nil || (m.CreatedAt != nil && m.CreatedAt.IsZero()) {
+		now := time.Now()
+		m.CreatedAt = &now
+	}
 }
 
 func (m *BaseModel) SetCreatedUpdated() {
