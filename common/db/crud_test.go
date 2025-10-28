@@ -145,6 +145,6 @@ func TestTimestamps(t *testing.T) {
 	found, err := userCRUD.GetByID(ctx, id)
 	require.NoError(t, err)
 
-	assert.WithinDuration(t, time.Now(), found.CreatedAt, time.Second*2)
-	assert.WithinDuration(t, time.Now(), found.UpdatedAt, time.Second*2)
+	assert.WithinDuration(t, time.Now(), *found.CreatedAt, time.Second*2)
+	assert.WithinDuration(t, time.Now(), *found.UpdatedAt, time.Second*2)
 }

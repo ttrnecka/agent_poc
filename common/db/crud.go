@@ -16,8 +16,8 @@ var ErrNotFound = errors.New("document not found")
 // BaseModel for all documents
 type BaseModel struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	CreatedAt time.Time          `bson:"createdAt" json:"createdAt"`
-	UpdatedAt time.Time          `bson:"updatedAt" json:"updatedAt"`
+	CreatedAt *time.Time         `bson:"createdAt" json:"createdAt"`
+	UpdatedAt *time.Time         `bson:"updatedAt" json:"updatedAt"`
 	DeletedAt *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
 }
 
@@ -43,10 +43,10 @@ type CRUDer[T any] interface {
 
 func (m *BaseModel) SetCreatedUpdated() {
 	now := time.Now()
-	if m.CreatedAt.IsZero() {
-		m.CreatedAt = now
+	if m.CreatedAt == nil || m.CreatedAt.IsZero() {
+		m.CreatedAt = &now
 	}
-	m.UpdatedAt = now
+	m.UpdatedAt = &now
 }
 
 func (m *BaseModel) GetID() primitive.ObjectID {
