@@ -36,7 +36,7 @@ type CRUDer[T any] interface {
 	GetCollection() *mongo.Collection
 	Find(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
 	FindWithSoftDeleted(context.Context, interface{}, ...*options.FindOptions) ([]T, error)
-	InsertAll(context.Context, []T) error
+	InsertAll(context.Context, []*T) error
 	SoftDeleteByID(context.Context, primitive.ObjectID) error
 	RestoreByID(context.Context, primitive.ObjectID) error
 }
@@ -187,7 +187,7 @@ func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T)
 	return err
 }
 
-func (c *CRUD[T]) InsertAll(ctx context.Context, docs []T) error {
+func (c *CRUD[T]) InsertAll(ctx context.Context, docs []*T) error {
 	inserts := make([]any, 0)
 	for _, d := range docs {
 		if bm, ok := any(d).(interface{ SetCreatedUpdated() }); ok {
