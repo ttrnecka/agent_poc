@@ -41,12 +41,19 @@ type CRUDer[T any] interface {
 	RestoreByID(context.Context, primitive.ObjectID) error
 }
 
-func (m *BaseModel) SetCreatedUpdated() {
+func (m *BaseModel) SetUpdated() {
 	now := time.Now()
-	if m.CreatedAt == nil || m.CreatedAt.IsZero() {
-		m.CreatedAt = &now
-	}
 	m.UpdatedAt = &now
+}
+
+func (m *BaseModel) SetCreated() {
+	now := time.Now()
+	m.CreatedAt = &now
+}
+
+func (m *BaseModel) SetCreatedUpdated() {
+	m.SetCreated()
+	m.SetUpdated()
 }
 
 func (m *BaseModel) GetID() primitive.ObjectID {
@@ -66,7 +73,7 @@ func (c *CRUD[T]) GetCollection() *mongo.Collection {
 }
 
 func (c *CRUD[T]) Create(ctx context.Context, doc *T) (primitive.ObjectID, error) {
-	if bm, ok := any(doc).(interface{ SetCreatedUpdated() }); ok {
+	if bm, ok := any(doc).(SetCreatedUpdateder); ok {
 		bm.SetCreatedUpdated()
 	}
 	res, err := c.Collection.InsertOne(ctx, doc)
@@ -176,8 +183,8 @@ func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T)
 		"$set":         doc,
 		"$currentDate": bson.M{"updatedAt": true},
 	}
-	if bm, ok := any(doc).(SetCreatedUpdateder); ok {
-		bm.SetCreatedUpdated()
+	if bm, ok := any(doc).(interface{ SetUpdated() }); ok {
+		bm.SetUpdated()
 		update = bson.M{
 			"$set": doc,
 		}
@@ -190,7 +197,7 @@ func (c *CRUD[T]) UpdateByID(ctx context.Context, id primitive.ObjectID, doc *T)
 func (c *CRUD[T]) InsertAll(ctx context.Context, docs []*T) error {
 	inserts := make([]any, 0)
 	for _, d := range docs {
-		if bm, ok := any(d).(interface{ SetCreatedUpdated() }); ok {
+		if bm, ok := any(d).(SetCreatedUpdateder); ok {
 			bm.SetCreatedUpdated()
 		}
 		inserts = append(inserts, d)
