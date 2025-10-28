@@ -16,8 +16,8 @@ var ErrNotFound = errors.New("document not found")
 // BaseModel for all documents
 type BaseModel struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	CreatedAt *time.Time         `bson:"createdAt" json:"createdAt"`
-	UpdatedAt *time.Time         `bson:"updatedAt" json:"updatedAt"`
+	CreatedAt *time.Time         `bson:"createdAt,omitempty" json:"createdAt"`
+	UpdatedAt *time.Time         `bson:"updatedAt,omitempty" json:"updatedAt"`
 	DeletedAt *time.Time         `bson:"deletedAt,omitempty" json:"deletedAt,omitempty"`
 }
 
